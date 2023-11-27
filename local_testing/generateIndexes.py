@@ -6,15 +6,16 @@ import pandas as pd
 #
 #
 
-
 def gen_index(MARKER_FILE, SHEET_NUMBER, data_file, window):
     # PARSE THROUGH MARKER FILE
 
     # GET MARKER FILE OPENED AND RDY
+    # markers --> labels of data file 
     markers = pd.read_csv(MARKER_FILE, header=None)
 
     # GET DATA FILENAME
-    excel_file = "../data/filenames-indexes_hplp.xlsx"
+    # excel_file --> contains several sheets, each sheet representing a single coolterm file in '/data' folder. col1 = coolterm file name, col2 = amplitude vals for flexion, col3 = ampltitude vals for extension, ect.
+    excel_file = "./data/filenames-indexes.xlsx"
 
     # curr_sheet = pd.read_excel(excel_file, SHEET_NUMBER)
     # data_file = curr_sheet['FILENAMES'][0]
@@ -22,6 +23,7 @@ def gen_index(MARKER_FILE, SHEET_NUMBER, data_file, window):
     print(f'FILENAME BEING USED ON SHEET {SHEET_NUMBER}: {data_file}')
 
     # READ IN TIMES FROM DATA FILE
+    # data --> time stamp and amplitude values
     data = pd.read_csv(data_file, delimiter='\t', header=None)
     # print(data)
 
@@ -76,7 +78,9 @@ def gen_index(MARKER_FILE, SHEET_NUMBER, data_file, window):
     sust_series = pd.Series(sustain_startindexes, index = [i for i in range(0,len(sustain_startindexes))])
     rest_series = pd.Series(rest_startindexes, index = [i for i in range(0,len(rest_startindexes))])
 
+
     d = {"FILENAMES": pd.Series(data_file, index = [0]), "FLEXION": flex_series, "EXTENSION": exte_series, "SUSTAIN": sust_series, "REST": rest_series, "WINDOW": pd.Series([window], index = [0])}
+    print(d)
     df = pd.DataFrame(data=d, index = [i for i in range(0,index_counter)])
     with pd.ExcelWriter(excel_file, engine='openpyxl', mode='a') as writer: 
         df.to_excel(writer, sheet_name=SHEET_NUMBER) 
@@ -84,7 +88,10 @@ def gen_index(MARKER_FILE, SHEET_NUMBER, data_file, window):
     print("indexes saved to file")
 
 if __name__ == '__main__':
-    MARKER_FILE = 'markerData/hp_lp_data/14:57:50_04:19:23.csv'  # CHANGE EACH TIME, SHOULD NOT WORK O/W
+    # MARKER_FILE --> col1 = labels, col2 = time stamps
+    MARKER_FILE = './data/14_57_50_04_19_23.csv'  # CHANGE EACH TIME, SHOULD NOT WORK O/W
+    # SHEET_NUMBER --> 
     SHEET_NUMBER = 'Sheet2'                  # CHANGE EACH TIME, SHOULD NOT WORK O/W
-    data_file = '../data/lp_hp_Data/CoolTerm Capture 2023-04-19 14-57-55.txt'           # CHANGE EACH TIME, SHOULD NOT WORK O/W
+    # data file --> col1 = time stamps, col2 = amplitudes
+    data_file = './data/CoolTerm Capture 2023-04-19 14-57-55.txt'    # CHANGE EACH TIME, SHOULD NOT WORK O/W 
     gen_index(MARKER_FILE,SHEET_NUMBER,data_file,window = 100)

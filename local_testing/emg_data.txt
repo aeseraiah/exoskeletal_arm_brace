@@ -1,1 +1,10 @@
-19:52:26	350	1.80	digital value = 350 analog value = 1.80	
+09:18:04	350	1.80	digital value = 350 analog value = 1.80	
+09:18:04	350	1.80	digital value = 350 analog value = 1.80	
+09:18:04	350	1.80	digital value = 350 analog value = 1.80	
+09:18:04	350	1.80	digital value = 350 analog value = 1.80	
+09:18:04	350	1.80	digital value = 350 analog value = 1.80	
+09:18:04	350	1.80	digital value = 350 analog value = 1.80	
+09:18:04	350	1.80	digital value = 350 analog value = 1.80	
+09:18:04	350	1.80	digital value = 350 analog value = 1.80	
+09:18:04	350	1.80	digital value = 350 analog value = 1.80	
+09:18:04	350	1.80	digital value = 350 analog value = 1.80	
