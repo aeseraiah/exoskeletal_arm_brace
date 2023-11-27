@@ -16,7 +16,7 @@ Output file from generateIndexes script:
 - excel_file
     - Ex filename: './data/filenames-indexes.xlsx'
     - Description: 
-      - contains several sheets, each sheet representing a single coolterm file in '/data' folder. col1 = coolterm file name, col2 = amplitude vals for flexion, col3 = ampltitude vals for extension, ect. (may not need it, as long as you put in 'w' mode instead of 'a'?)
+      - contains several sheets, each sheet representing a single coolterm file in '/data' folder. col1 = coolterm file name, col2 = amplitude vals for flexion, col3 = ampltitude vals for extension, ect. (as long as you put in 'w' mode instead of 'a', it shouldn't be needed as input file)
 
 Input files needed to run realTimeMarkers script:
 - None
