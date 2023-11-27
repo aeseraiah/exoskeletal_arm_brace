@@ -2,9 +2,9 @@
 
 Input files needed to run generateIndexes script:
 - MARKER_FILE:
-   Ex filename: './data/14_57_50_04_19_23.csv' 
-   Description: 
-    col1 = labels, col2 = time stamps
+   - Ex filename: './data/14_57_50_04_19_23.csv' 
+   - Description: 
+     - col1 = labels, col2 = time stamps
 
 - data_file:
     Ex filename: './data/CoolTerm Capture 2023-04-19 14-57-55.txt' 
