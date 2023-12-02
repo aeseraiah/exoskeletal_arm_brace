@@ -15,7 +15,7 @@ def gen_index(MARKER_FILE, SHEET_NUMBER, data_file, window):
 
     # GET DATA FILENAME
     # excel_file --> contains several sheets, each sheet representing a single coolterm file in '/data' folder. col1 = coolterm file name, col2 = amplitude vals for flexion, col3 = ampltitude vals for extension, ect.
-    excel_file = "./data/filenames-indexes.xlsx"
+    excel_file = "./Previous_Team_Data/filenames-indexes.xlsx"
 
     # curr_sheet = pd.read_excel(excel_file, SHEET_NUMBER)
     # data_file = curr_sheet['FILENAMES'][0]
@@ -89,9 +89,9 @@ def gen_index(MARKER_FILE, SHEET_NUMBER, data_file, window):
 
 if __name__ == '__main__':
     # MARKER_FILE --> col1 = labels, col2 = time stamps
-    MARKER_FILE = './data/14_57_50_04_19_23.csv'  # CHANGE EACH TIME, SHOULD NOT WORK O/W
+    MARKER_FILE = './Previous_Team_Data/14_57_50_04_19_23.csv'  # CHANGE EACH TIME, SHOULD NOT WORK O/W
     # SHEET_NUMBER --> 
     SHEET_NUMBER = 'Sheet2'                  # CHANGE EACH TIME, SHOULD NOT WORK O/W
     # data file --> col1 = time stamps, col2 = amplitudes
-    data_file = './data/CoolTerm Capture 2023-04-19 14-57-55.txt'    # CHANGE EACH TIME, SHOULD NOT WORK O/W 
+    data_file = './Previous_Team_Data/CoolTerm Capture 2023-04-19 14-57-55.txt'    # CHANGE EACH TIME, SHOULD NOT WORK O/W 
     gen_index(MARKER_FILE,SHEET_NUMBER,data_file,window = 100)

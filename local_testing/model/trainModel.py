@@ -16,7 +16,7 @@ import pickle
 TRAINING_DATA_COUNT = 6
 window_size = 100
 
-excel_file = "./data/filenames-indexes.xlsx"
+excel_file = "../Previous_Team_Data/filenames-indexes.xlsx"
 filenames = []
 
 # GET EACH FILENAME AND CORRESPONDING INDEXES
