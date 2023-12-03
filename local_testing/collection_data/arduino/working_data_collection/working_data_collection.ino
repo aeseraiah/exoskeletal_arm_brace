@@ -5,6 +5,7 @@
 #endif
 
 #include "EMGFilters.h"
+#include <Servo.h>
 #define TIMING_DEBUG 1
 #define SensorInputPin A0 // input pin number
 
@@ -18,9 +19,14 @@ unsigned long previousMicros = 0;
 const int samplingInterval = 1000;  // Set your desired sampling interval in microseconds (1 millisecond for 1000 Hz)
 static int Threshold = 0;
 
+unsigned long timeStamp;
+unsigned long timeBudget;
+
 void setup() {
   myFilter.init(sampleRate, humFreq, true, true, true);
   Serial.begin(115200);   // Adjusted baud rate
+
+  timeBudget = 1e6 / sampleRate;
 }
 
 void loop() {
