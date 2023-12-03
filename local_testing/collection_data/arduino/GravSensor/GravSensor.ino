@@ -1,42 +1,11 @@
-/*
-* Copyright 2017, OYMotion Inc.
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions
-* are met:
-*
-* 1. Redistributions of source code must retain the above copyright
-*    notice, this list of conditions and the following disclaimer.
-*
-* 2. Redistributions in binary form must reproduce the above copyright
-*    notice, this list of conditions and the following disclaimer in
-*    the documentation and/or other materials provided with the
-*    distribution.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-* FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-* COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-* OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-* THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-* DAMAGE.
-*
-*/
-
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
 #include "WProgram.h"
 #endif
-
 #include "EMGFilters.h"
-
+//#include "algorithm.h"
+#include <Servo.h>
 #define TIMING_DEBUG 1
 
 #define SensorInputPin A0 // input pin number
@@ -57,58 +26,115 @@ int humFreq = NOTCH_FREQ_60HZ;
 // put on the sensors, and release your muscles;
 // wait a few seconds, and select the max value as the threshold;
 // any value under threshold will be set to zero
-static int Threshold = 0;
+//static int Threshold = 0;
 
 unsigned long timeStamp;
 unsigned long timeBudget;
+Servo myservo;
 
 void setup() {
     /* add setup code here */
-    // myFilter.init(sampleRate, humFreq, true, true, true);
+    myFilter.init(sampleRate, humFreq, true, true, true);
 
     // open serial
     Serial.begin(115200);
 
     // setup for time cost measure
     // using micros()
-    // timeBudget is the avaiable time for each iteration to maintain the desired sampling rate 
-    timeBudget = 1e6 / sampleRate; // timeBudget = 1000 when sampleRate = 1000 Hz
+    timeBudget = 1e6 / sampleRate;
+    myservo.attach(9);
     // micros will overflow and auto return to zero every 70 minutes
 }
 
-void loop() {
-    /* add main program code here */
-    // In order to make sure the ADC sample frequence on arduino,
-    // the time cost should be measured each loop
-    /*------------start here-------------------*/
-    timeStamp = micros();
+int calc_Thresh(){
+  //loop the function until good enough data has been collected to continue
+    while(1){
+      //sample at 20/second
+      //instantiate a list to hold 30 seconds of thresholding data
 
-    int Value = analogRead(SensorInputPin);
-    
-    // filter processing
-    //int DataAfterFilter = myFilter.update(Value);
-
-    //int envlope = sq(DataAfterFilter);
-    int envlope = sq(Value);
-    // any value under threshold will be set to zero
-    envlope = (envlope > Threshold) ? envlope : 0;
-
-
-    timeStamp = micros() - timeStamp;
-    if (TIMING_DEBUG) {
-        // Serial.print("Read Data: "); Serial.println(Value);
-        // Serial.print("Filtered Data: ");Serial.println(DataAfterFilter);
-        //Serial.print("Squared Data: ");
+      //most likely problem is improper initialization of list
+      //unsigned long data[100];
+      
+      //start a timer for 30 seconds
+      Serial.println("");
+      Serial.println("Relax your arm with the sensor in place for 5 seconds."); 
+      Serial.println("Try to keep bicep activity at a minimum.");
+      Serial.println("The values printed to the screen should be as low as possible.");
+      Serial.println("A message will appear when 5 seconds has passed.");
+      long flushTime = millis();
+      unsigned long Value, DataAfterFilter, envlope;
+      //delay data collection for 4 seconds to allow for reading of the message, flush 4 seconds of values
+      while (millis() - flushTime < 4000){
+        Value = analogRead(SensorInputPin); 
+        DataAfterFilter = myFilter.update(Value);
+        envlope = sq(DataAfterFilter);
+      }
+      unsigned long Threshold = 0;
+      long startTime = millis();
+      //loop for 5 seconds
+      while (millis() - startTime < 5000){
+        Value = analogRead(SensorInputPin); 
+        DataAfterFilter = myFilter.update(Value);
+        envlope = sq(DataAfterFilter);
         Serial.println(envlope);
-        // Serial.print("Filters cost time: "); Serial.println(timeStamp);
-        // the filter cost average around 520 us
+        if (envlope > Threshold) {
+              Threshold = envlope;
+          }
+      }
+      Serial.println("");
+      Serial.println("5 seconds has passed. ");
+      if (Threshold <= 500){
+        Serial.println("");
+        Serial.println("Automated Thresholding Complete.");
+        Serial.print("Calculated Threshold = ");
+        Serial.println(Threshold);
+        return(Threshold);
+      }
+      else {
+        Serial.println("");
+        Serial.print("Calculated Threshold = ");
+        Serial.println(Threshold);
+        Serial.println("Bad data, adjust the sensor. Automated Thresholding will be attempted again in 5 seconds.");
+        delay(5000);
+      }
     }
+}
 
-    /*------------end here---------------------*/
-    // if less than timeBudget, then you still have (timeBudget - timeStamp) to
-    // do your work
-    // delayMicroseconds(timeBudget);
-    // delayMicroseconds(500);
-    // if more than timeBudget, the sample rate need to reduce to
-    // SAMPLE_FREQ_500HZ
+void actuate(unsigned long thresh) {
+    while (1) {
+      //gather data from .5 seconds, if any values are above thresh (demonstrating activated muscle), the servomotor will "flex" the brace
+      unsigned long Value, DataAfterFilter, envlope;
+      unsigned long max = thresh;
+      long startTime = millis();
+      while (millis() - startTime < 500){
+        Value = analogRead(SensorInputPin); 
+        DataAfterFilter = myFilter.update(Value);
+        envlope = sq(DataAfterFilter);
+        //Serial.println(envlope);
+        if (envlope > max) {
+              max = envlope;
+              Serial.println(max);
+          }
+      }
+      //timeStamp = micros() - timeStamp;
+      if (TIMING_DEBUG) {
+          // Serial.print("Read Data: "); Serial.println(Value);
+          // Serial.print("Filtered Data: ");Serial.println(DataAfterFilter);
+          //Serial.print("Squared Data: ");
+          Serial.println(envlope);
+          if(envlope){
+            //potentially use this later to map servo actuation to amplitude of max flexion value
+            //val = map(val, 0, 1023, 0, 180);     // scale it to use it with the servo (value between 0 and 180)
+            myservo.write(180); 
+          }
+          else if (!envlope){
+            myservo.write(0); 
+          }
+      }
+    }
+}
+void loop() {
+    unsigned long Threshold;
+    Threshold = calc_Thresh();
+    actuate(Threshold);
 }
