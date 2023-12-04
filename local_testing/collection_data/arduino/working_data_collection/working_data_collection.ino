@@ -16,7 +16,7 @@ int humFreq = NOTCH_FREQ_60HZ;
 const int emgPin = A0;  // Analog pin to which the EMG sensor is connected
 int emgValue = 0;      // Variable to store the EMG sensor reading
 unsigned long previousMicros = 0;
-const int samplingInterval = 1000;  // Set your desired sampling interval in microseconds (1 millisecond for 1000 Hz)
+int desiredSamplingRate = 100;  // Set your desired overall sampling rate in Hz
 static int Threshold = 0;
 
 unsigned long timeStamp;
@@ -29,23 +29,42 @@ void setup() {
   timeBudget = 1e6 / sampleRate;
 }
 
-void loop() {
-  unsigned long currentMicros = micros();
+// void loop() {
+//   unsigned long currentMicros = micros();
   
-  if (currentMicros - previousMicros >= samplingInterval) {
-    emgValue = analogRead(emgPin);  // Read the analog value from the EMG sensor
+//   if (currentMicros - previousMicros >= desiredSamplingRate) {
 
-    int DataAfterFilter = myFilter.update(emgValue);
+//     // unsigned long loopExecutionTime = currentMicros - previousMicros;
+//     // Serial.print("Loop Execution Time (us): ");
+//     // Serial.println(loopExecutionTime);
 
-    int envlope = sq(DataAfterFilter);
-    envlope = (envlope > Threshold) ? envlope : 0;
+//     emgValue = analogRead(emgPin);  // Read the analog value from the EMG sensor
 
-    // Serial.println(emgValue);       // Print the EMG value to the serial monitor
-    Serial.printf("Time in microseconds%d\n:", micros());
-    // Serial.println(micros());
-    Serial.println(envlope);       // Print the EMG value to the serial monitor
-    previousMicros = currentMicros;
-  }
+//     int DataAfterFilter = myFilter.update(emgValue);
+
+//     int envlope = sq(DataAfterFilter);
+//     envlope = (envlope > Threshold) ? envlope : 0;
+
+//     // Serial.println(emgValue);       // Print the EMG value to the serial monitor
+//     // Serial.print("Time in microseconds:");
+//     Serial.println(micros());
+//     Serial.println(envlope);       // Print the EMG value to the serial monitor
+//     previousMicros = currentMicros;
+//   }
+// }
+
+void loop() {  
+  emgValue = analogRead(emgPin);  // Read the analog value from the EMG sensor
+
+  int DataAfterFilter = myFilter.update(emgValue);
+
+  int envlope = sq(DataAfterFilter);
+  envlope = (envlope > Threshold) ? envlope : 0;
+
+  // Serial.println(emgValue);       // Print the EMG value to the serial monitor
+  Serial.println(micros());
+  Serial.println(envlope);       // Print the EMG value to the serial monitor
+
 }
 
 

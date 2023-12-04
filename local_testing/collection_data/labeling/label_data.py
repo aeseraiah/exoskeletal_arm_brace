@@ -1,63 +1,52 @@
-import numpy as np
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
-data_dir = '../data/'
 
+def data_labeling(interpolated_filename, labeled_filename):
 
-def data_labeling(emg_filename):
-    columns = ['emg amplitudes']
-    data_df = pd.read_csv(data_dir + emg_filename, names=columns, index_col=False)
+    data_df = pd.read_csv(interpolated_filename, index_col=False)
 
-    num_samples = len(data_df)
-
-    ###############################
-    # if sampling rate is unknown but tduration of file is known:
-    time_of_file = 195 # 3 minutes
-    sampling_rate = num_samples/time_of_file
-    
-    ###############################
+    total_num_samples = len(data_df)
 
     ###############################
     # if sampling rate is known:
-    # sampling_rate = 1000
-    # time_of_file_sec = num_samples/sampling_rate
-    # time_of_file_min = time_of_file_sec/60
+    sampling_rate = 1000
+    time_of_file_sec = total_num_samples / sampling_rate
+    time_of_file_min = time_of_file_sec / 60
     ###############################
 
-    print(data_df['emg amplitudes'])
-    plt.plot(data_df.index, data_df['emg amplitudes'])
-    plt.show()
+    # plt.plot(data_df.index, data_df['emg amplitude'])
+    # plt.show()
 
-    data_df['labels'] = np.arange(0,len(data_df))
+    # Append labels as the third column to emg file:
 
-    ################################################
+    num_samples_for_30sec_rest = sampling_rate * 30
+    num_samples_for_5sec_intervals = sampling_rate * 5
 
-    # Append labels as the second column to emg file:
-    # label_arr = []
+    rest_labels = np.full(num_samples_for_30sec_rest, 0)
+    flexion_labels = np.full(num_samples_for_5sec_intervals, 1)
+    extension_labels = np.full(num_samples_for_5sec_intervals, 2)
 
-    # num_samples_for_30sec_rest = sampling_rate * 30
-    # num_samples_for_5sec_intervals = sampling_rate * 5
+    # Create an empty column for labels
+    data_df['labels'] = np.nan
 
-    # rest_labels = np.full(num_samples_for_30sec_rest, 0)
-    # flexion_labels = np.full(num_samples_for_5sec_intervals, 1)
-    # extension_labels = np.full(num_samples_for_5sec_intervals, 2)
+    # Handle the first 30 seconds as rest
+    data_df.loc[:num_samples_for_30sec_rest-1, 'labels'] = rest_labels[:num_samples_for_30sec_rest]
 
-    # data_df.iloc[:num_samples_for_30sec_rest, data_df.columns.get_loc('labels')] = rest_labels
-    
-    # data_df.iloc[num_samples_for_30sec_rest+2:num_samples_for_30sec_rest+num_samples_for_5sec_intervals] = flexion_labels
-    print(data_df.head)
+    for i in range(num_samples_for_30sec_rest, total_num_samples - num_samples_for_30sec_rest, num_samples_for_5sec_intervals * 2):
+        data_df.loc[i:i + num_samples_for_5sec_intervals-1, 'labels'] = flexion_labels
+        data_df.loc[i + num_samples_for_5sec_intervals:i + 2 * num_samples_for_5sec_intervals-1, 'labels'] = extension_labels
 
+    # Handle the last 30 seconds as rest
+    data_df.loc[total_num_samples - num_samples_for_30sec_rest:, 'labels'] = rest_labels[:num_samples_for_30sec_rest]
 
-    # label_arr.append()
+    # Fill NaN values in the labels column with the last label
+    data_df['labels'].fillna(method='ffill', inplace=True)
 
-    # for index, row in data_df.iterrows():
-    #     data_df.at[index, 'labels'] = index
+    # Convert labels column to integer type
+    data_df['labels'] = data_df['labels'].astype(int)
 
-    data_df.to_csv('emg_data_labeled.csv', index=False)
+    data_df.to_csv(f'./collection_data/labeling/{labeled_filename}.csv', index=False)
 
-
-
-
-time_of_file_min = data_labeling(emg_filename='Grant_Bicep_Take3')
-# Isaac Bicep 3min protocol
+# data_labeling(interpolated_filename='../interpolation/fake_interpolation_data.csv', labeled_filename='test1')
