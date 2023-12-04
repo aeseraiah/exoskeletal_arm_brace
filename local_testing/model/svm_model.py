@@ -7,10 +7,10 @@ from sklearn.metrics import classification_report, confusion_matrix
 import pickle
 
 
-def svm(data_path, filename):
+def svm(data_path, labeled_filename):
 
     # load features and labels:
-    file = data_path + filename
+    file = data_path + labeled_filename
     labeled_data_df = pd.read_csv(file)
 
     resting_data_df = labeled_data_df[labeled_data_df['labels']==0]

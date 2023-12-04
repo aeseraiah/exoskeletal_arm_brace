@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-def create_duration_file(coolterm_filename, new_filename):
-    df = pd.read_csv(coolterm_filename, names=['timestamps', 'amplitudes and duration'], sep='\t')
+def create_duration_file(data_path, coolterm_filename, new_filename):
+    df = pd.read_csv(data_path + coolterm_filename, names=['timestamps', 'amplitudes and duration'], sep='\t')
 
     duration_array = []
     amplitude_array = []

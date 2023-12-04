@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def data_labeling(interpolated_filename, labeled_filename):
+def data_labeling(data_path, interpolated_filename, labeled_filename):
 
-    data_df = pd.read_csv(interpolated_filename, index_col=False)
+    data_df = pd.read_csv(data_path + interpolated_filename, index_col=False)
 
     total_num_samples = len(data_df)
 
