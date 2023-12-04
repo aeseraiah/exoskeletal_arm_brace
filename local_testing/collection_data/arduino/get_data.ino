@@ -103,8 +103,9 @@ int calc_Thresh(){
 
 void gen_data(unsigned long thresh) {
     Serial.println("Collecting Data for the next two minutes.");
-    Serial.println("Start relaxed for 5 seconds, then flex arm for 5 seconds. Repeat for the duration.");
-    delay(2000);
+    Serial.println("Start relaxed for 30 seconds, then flex arm for 5 seconds, the flex for 5 seconds."); 
+    Serial.println("Repeat for the duration until time 150000. Relax for final 30 seconds.");
+    delay(5000);
     unsigned long Value, DataAfterFilter, envlope;
     unsigned long max = thresh;
     long startTime = millis();
@@ -114,19 +115,29 @@ void gen_data(unsigned long thresh) {
     while (millis() - startTime < 180000){
       //gather data from .5 seconds, if any values are above thresh (demonstrating activated muscle), the servomotor will "flex" the brace
       //check time to see if flexion or extension should be recorded
-      if ((millis() - startTime)%5000 == 0){
-        if ((millis() - startTime)%10000 == 0){
-          Serial.println("Initiate Extension.");
-        }
-        else {
-          Serial.println("Initiate Flexion.");
+      if(millis() - startTime >= 30000 and millis() - startTime < 150000){
+        if ((millis() - startTime)%5000 == 0){
+          if ((millis() - startTime)%10000 == 0){
+            Serial.println("------------------------------------");
+            Serial.println("Initiate Flexion.");
+            delay(500);
+          }
+          else {
+            Serial.println("------------------------------------");
+            Serial.println("Initiate Extension.");
+            delay(500);
+          }
         }
       }
+      if (millis() - startTime == 150000){
+              Serial.println("Sustain Extension for remainder.");
+              delay(500);
+            }
       Value = analogRead(SensorInputPin); 
       DataAfterFilter = myFilter.update(Value);
       envlope = sq(DataAfterFilter);
       envlope = (envlope > thresh) ? envlope : 0;
-      Serial.print(millis());
+      Serial.print(millis() - startTime);
       Serial.print(",");
       Serial.println(envlope);
     }
