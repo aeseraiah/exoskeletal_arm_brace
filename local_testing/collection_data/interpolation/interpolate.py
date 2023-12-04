@@ -32,14 +32,14 @@ def interp(data_path, amplitude_and_durations_filename, interp_filename):
     plt.subplot(2,1,1) # 2 rows, 1 column, 1st subplot
     plt.title("Uninterpolated")
     plt.plot(times, amplitudes, label = "Uninterpolated", marker='o')
-    plt.xlabel("Time (Milliseconds)")
+    plt.xlabel("Time (Seconds)")
     plt.ylabel("Amplitude (mV^2)")
     plt.legend()
 
     plt.subplot(2,1,2)
     plt.title("Interpolated")
     plt.plot(time_1000_Hz, amplitudes_1000_Hz, label = "Interpolated", marker='o', color='green')
-    plt.xlabel("Time (Milliseconds)")
+    plt.xlabel("Time (Seconds)")
     plt.ylabel("Amplitude (mV^2)")
     plt.legend()
 
