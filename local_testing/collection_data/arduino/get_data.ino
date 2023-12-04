@@ -129,7 +129,6 @@ void gen_data(unsigned long thresh) {
       Serial.print(millis());
       Serial.print(",");
       Serial.println(envlope);
-      myfile << millis() << "," << envlope << "\n";
     }
     Serial.println("Data Collection Finished");
     Serial.print("End time = ");
@@ -137,7 +136,7 @@ void gen_data(unsigned long thresh) {
 }
 
 
-void loop() {s
+void loop() {
     unsigned long Threshold;
     Threshold = calc_Thresh();
 
