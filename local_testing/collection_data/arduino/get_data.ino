@@ -115,7 +115,7 @@ void gen_data(unsigned long thresh) {
     while (millis() - startTime < 180000){
       //gather data from .5 seconds, if any values are above thresh (demonstrating activated muscle), the servomotor will "flex" the brace
       //check time to see if flexion or extension should be recorded
-      if(millis() - startTime >= 30000 and millis() - startTime < 150000){
+      if(millis() - startTime >= 29000 and millis() - startTime < 150000){
         if ((millis() - startTime)%5000 == 0){
           if ((millis() - startTime)%10000 == 0){
             Serial.println("------------------------------------");
