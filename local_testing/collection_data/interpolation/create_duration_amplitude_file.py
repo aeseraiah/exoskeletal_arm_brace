@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 def create_duration_file(data_path, coolterm_filename, new_filename):
-    df = pd.read_csv(data_path + coolterm_filename, names=['timestamps', 'amplitudes and duration'], sep='\t')
+    df = pd.read_csv(data_path + coolterm_filename, names=['amplitudes and duration'], sep='\t')
 
     duration_array = []
     amplitude_array = []
@@ -15,12 +15,14 @@ def create_duration_file(data_path, coolterm_filename, new_filename):
     # print(duration_array)
 
     # converting durations from microseconds to seconds:
-    durration_arr_secs = [(x/1000000) for x in duration_array]
+    duration_arr_secs = [(x/1000000) for x in duration_array]
 
     # column 1 = the duration at which the emg value was recorded, column 2 = emg value
-    new_df = pd.DataFrame({'duration (seconds)': durration_arr_secs, 'emg amplitude': amplitude_array})
+    new_df = pd.DataFrame({'duration (seconds)': duration_arr_secs, 'emg amplitude': amplitude_array})
 
-    new_df.to_csv(f'./collection_data/interpolation/{new_filename}.csv', index=False)
+    # new_df.to_csv(f'./collection_data/interpolation/{new_filename}.csv', index=False)
+    new_df.to_csv(f'{new_filename}.csv', index=False)
+    print(new_df)
 
 
-# create_duration_file(coolterm_filename='../../data/coolterm_samplingrate_900Hz.txt', new_filename='amplitude_and_durations_900Hz')
+create_duration_file(data_path='../../data/',coolterm_filename='removed_samples_Isaac_3min_protocol.txt', new_filename='test')

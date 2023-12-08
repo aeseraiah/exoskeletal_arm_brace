@@ -21,13 +21,15 @@ def interp(data_path, amplitude_and_durations_filename, interp_filename):
     og_sampling_rate = num_samples / (times[(len(times)-1)] - times[0]) 
 
     time_1000_Hz = np.arange(times[0], times[(len(times)-1)], 1/sample_rate)
-    interpolator = scipy.interpolate.interp1d(times, amplitudes, kind='linear', )
+    interpolator = scipy.interpolate.interp1d(times, amplitudes, kind='linear')
     amplitudes_1000_Hz = interpolator(time_1000_Hz)
 
     new_df = pd.DataFrame({'duration (seconds)': time_1000_Hz, 'emg amplitude': amplitudes_1000_Hz})
 
+    # new_df = new_df.iloc[30000:]
+    # new_df = new_df.iloc[:-30000]
 
-    new_df.to_csv(interp_filename, index=False)
+    new_df.to_csv(f'{interp_filename}.csv', index=False)
 
     plt.subplot(2,1,1) # 2 rows, 1 column, 1st subplot
     plt.title("Uninterpolated")
@@ -45,6 +47,9 @@ def interp(data_path, amplitude_and_durations_filename, interp_filename):
 
     plt.tight_layout()
 
-    plt.savefig('Uninterpolated_Vs_Interpolated.jpeg')
+    plt.savefig('Uninterpolated_Vs_Interpolated.png')
 
-#interp(data_path='./collection_data/interpolation/', amplitude_and_durations_filename='amplitude_and_durations_900Hz.csv', interp_filename='fake_interpolation_data')
+    plt.show()
+
+
+interp(data_path='./', amplitude_and_durations_filename='test.csv', interp_filename='testing_interpolation_data')
