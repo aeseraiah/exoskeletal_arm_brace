@@ -72,7 +72,7 @@ int calc_Thresh(){
       unsigned long Threshold = 0;
       long startTime = millis();
       //loop for 5 seconds
-      while (millis() - startTime < 5000){
+      while (millis() - startTime < 10000){
         Value = analogRead(SensorInputPin); 
         DataAfterFilter = myFilter.update(Value);
         envlope = sq(DataAfterFilter);
@@ -83,7 +83,8 @@ int calc_Thresh(){
       }
       Serial.println("");
       Serial.println("5 seconds has passed. ");
-      if (Threshold <= 500){
+      //if highest value from past 5 seconds is below a certain signal quality threshold, set threshold for resting muscle activity to the highest value
+      if (Threshold <= 1000){
         Serial.println("");
         Serial.println("Automated Thresholding Complete.");
         Serial.print("Calculated Threshold = ");
@@ -106,29 +107,56 @@ void actuate(unsigned long thresh) {
       unsigned long Value, DataAfterFilter, envlope;
       unsigned long max = thresh;
       long startTime = millis();
-      while (millis() - startTime < 500){
+      int i = 0;
+      int count = 0;
+      while (millis() - startTime < 1000){
         Value = analogRead(SensorInputPin); 
         DataAfterFilter = myFilter.update(Value);
         envlope = sq(DataAfterFilter);
+        count ++;
         //Serial.println(envlope);
+        //if read data is greater than threshold, set max = data
         if (envlope > max) {
-              max = envlope;
-              Serial.println(max);
+              //max = envlope;
+              //for every instance of read data being greater than threshold, increase index by one
+              i++;
+              //Serial.println(envlope);
           }
       }
+      Serial.print("number of samples in 1 second: ");
+      Serial.println(count);
+      //if max is greater than threshold (if any values were greater than threshold), set max = max. Else, max = 0
+      //Use machine learning to set "weight"
+      //max = (max > thresh*2) ? max : 0;
       //timeStamp = micros() - timeStamp;
       if (TIMING_DEBUG) {
           // Serial.print("Read Data: "); Serial.println(Value);
           // Serial.print("Filtered Data: ");Serial.println(DataAfterFilter);
           //Serial.print("Squared Data: ");
-          Serial.println(envlope);
-          if(envlope){
+          //Serial.println(envlope);
+          //if 4 samples or greater of data read over 1 second indicate flexion, flex
+          if(i>=10){
             //potentially use this later to map servo actuation to amplitude of max flexion value
             //val = map(val, 0, 1023, 0, 180);     // scale it to use it with the servo (value between 0 and 180)
-            myservo.write(180); 
+            Serial.print("number of samples above threshold: ");
+            Serial.println(i);
+            Serial.println("flexing servo");
+            myservo.write(100); 
+            //Serial.println(myservo.read());
           }
-          else if (!envlope){
+          //if less than 2 samples of data read over 1 second indicate flexion, extend
+          else if (i<5){
+            Serial.print("number of samples above threshold: ");
+            Serial.println(i);
+            Serial.println("extending servo");
             myservo.write(0); 
+            //Serial.println(myservo.read());
+          }
+          //if between 5 and 10 samples are read as flexion, do nothing
+          else {
+            Serial.print("number of samples above threshold: ");
+            Serial.println(i);
+            Serial.println("inconclusive data, do nothing");
           }
       }
     }
