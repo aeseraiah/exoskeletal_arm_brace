@@ -30,140 +30,159 @@ int humFreq = NOTCH_FREQ_60HZ;
 //static int Threshold = 0;
 Servo myservo;
 
+struct Thresholds {
+  unsigned long biThresh;
+  unsigned long triThresh;
+};
+
 void setup() {
   /* add setup code here */
   myFilter.init(sampleRate, humFreq, true, true, true);
 
   // open serial
-  Serial.begin(115200);
+  Serial.begin(74880);
 
   myservo.attach(9);
   // micros will overflow and auto return to zero every 70 minutes
 }
 
-unsigned long readPins() {
-  unsigned long biValue, biDataAfterFilter, bienvlope, triValue, triDataAfterFilter, trienvlope;
-  biValue = analogRead(BiSensorInputPin);
-  biDataAfterFilter = myFilter.update(biValue);
-  bienvlope = sq(biDataAfterFilter);
-  triValue = analogRead(TriSensorInputPin);
-  triDataAfterFilter = myFilter.update(triValue);
-  trienvlope = sq(triDataAfterFilter);
-  return(bienvlope, trienvlope);
+unsigned long readBi() {
+    unsigned long biValue, biDataAfterFilter, bienvlope;
+    biValue = analogRead(BiSensorInputPin);
+    biDataAfterFilter = myFilter.update(biValue);
+    bienvlope = sq(biDataAfterFilter);
+    return(bienvlope);
 }
+
+unsigned long readTri() {
+    unsigned long triValue, triDataAfterFilter, trienvlope;
+    triValue = analogRead(TriSensorInputPin);
+    triDataAfterFilter = myFilter.update(triValue);
+    trienvlope = sq(triDataAfterFilter);
+    return(trienvlope);
+}
+
 void confirmSensors(){
   while (1){
-    Serial.println("Confirming good sensor contact.");
-    Serial.println("Keep your bicep and tricep as relaxed as possible.");
-    Serial.println("Values printed to the screen should be as close to 0 as possible");
-    Serial.println("A message will be displayed in 10 seconds with more instructions.");
-
+    Serial.println(F("Confirming good sensor contact."));
+    Serial.println(F("Keep your bicep and tricep as relaxed as possible."));
+    Serial.println(F("Values printed to the screen should be as close to 0 as possible"));
+    Serial.println(F("A message will be displayed in 10 seconds with more instructions."));
     unsigned long bienvlope, trienvlope;
     unsigned long flushTime = millis();
     while (millis() - flushTime < 5000) {
-        bienvlope, trienvlope = readPins();
+        bienvlope = readBi();
+        trienvlope = readTri();
       }
     unsigned long biThreshold = 0;
     unsigned long triThreshold = 0;
     long startTime = millis();
     //loop for 5 seconds
     while (millis() - startTime < 5000) {
-      bienvlope, trienvlope = readPins();
+      bienvlope = readBi();
+      trienvlope = readTri();
+      Serial.print("Bi: ");
+      Serial.println(bienvlope);
+      Serial.print("Tri: ");
+      Serial.println(trienvlope);
       //Serial.println(bienvlope);
       if (bienvlope > biThreshold) {
         biThreshold = bienvlope;
-        Serial.print("Bicep Value: ");
+        Serial.print(F("Bicep Value: "));
         Serial.println(biThreshold);
       }
       //Serial.println(trienvlope);
       if (trienvlope > triThreshold) {
         triThreshold = trienvlope;
-        Serial.print("Tricep Value: ");
+        Serial.print(F("Tricep Value: "));
         Serial.println(triThreshold);
       }
     }
-    Serial.println("");
+    Serial.println(F(""));
     Serial.println("10 seconds has passed. ");
     if (biThreshold <= 1000 and triThreshold <= 1000) {
-        Serial.println("");
-        Serial.println("Sensor placement confirmed.");
-        Serial.print("Highest Bicep Value = ");
+        Serial.println(F(""));
+        Serial.println(F("Sensor placement confirmed."));
+        Serial.print(F("Highest Bicep Value = "));
         Serial.println(biThreshold);
-        Serial.print("Highest Tricep Value = ");
+        Serial.print(F("Highest Tricep Value = "));
         Serial.println(triThreshold);
         return;
       } else if (biThreshold <= 1000 and triThreshold >= 1000){
-        Serial.println("");
-        Serial.println("Bicep Sensor placement confirmed. Tricep Sensor placement failed");
-        Serial.println("Adjust Tricep Sensor placement and try again");
-        Serial.print("Highest Bicep Value = ");
+        Serial.println(F(""));
+        Serial.println(F("Bicep Sensor placement confirmed. Tricep Sensor placement failed"));
+        Serial.println(F("Adjust Tricep Sensor placement and try again"));
+        Serial.print(F("Highest Bicep Value = "));
         Serial.println(biThreshold);
-        Serial.print("Highest Tricep Value = ");
+        Serial.print(F("Highest Tricep Value = "));
         Serial.println(triThreshold);
         delay(5000);
       } else if (biThreshold >= 1000 and triThreshold <= 1000){
-        Serial.println("");
-        Serial.print("Highest Bicep Value = ");
+        Serial.println(F(""));
+        Serial.print(F("Highest Bicep Value = "));
         Serial.println(biThreshold);
-        Serial.print("Highest Tricep Value = ");
+        Serial.print(F("Highest Tricep Value = "));
         Serial.println(triThreshold);
-        Serial.println("Bicep Sensor placement failed. Tricep Sensor placement confirmed");
-        Serial.println("Adjust Bicep Sensor placement and try again in 5 seconds.");
+        Serial.println(F("Bicep Sensor placement failed. Tricep Sensor placement confirmed"));
+        Serial.println(F("Adjust Bicep Sensor placement and try again in 5 seconds."));
         delay(5000);
         
       } else {
-        Serial.println("");
-        Serial.print("Highest Bicep Value = ");
+        Serial.println(F(""));
+        Serial.print(F("Highest Bicep Value = "));
         Serial.println(biThreshold);
-        Serial.print("Highest Tricep Value = ");
+        Serial.print(F("Highest Tricep Value = "));
         Serial.println(triThreshold);
-        Serial.println("Both sensor placements failed.");
-        Serial.println("Adjust Sensor placements and try again in 5 seconds.");
+        Serial.println(F("Both sensor placements failed."));
+        Serial.println(F("Adjust Sensor placements and try again in 5 seconds."));
         delay(5000);
     }
   }
 }
-int calcExtend() {
+Thresholds calcExtend() {
   //loop the function until good enough data has been collected to continue
   while (1) {
-    Serial.println("");
-    Serial.println("Keep your arm in activated extension orientation with the sensor in place for 10 seconds.");
-    Serial.println("Attempt maximum extension intensity while maintaining comfort.");
-    Serial.println("This should be the same muscle activty you want to use to put the brace in extension orientation.");
+    Serial.println(F(""));
+    Serial.println(F("Keep your arm in activated extension orientation with the sensor in place for 10 seconds."));
+    Serial.println(F("Attempt maximum extension intensity while maintaining comfort."));
+    Serial.println(F("This should be the same muscle activty you want to use to put the brace in extension orientation."));
     //Serial.println("The values printed to the screen should be as low as possible.");
-    Serial.println("A message will appear when 10 seconds has passed.");
-    long flushTime = millis();
+    Serial.println(F("A message will appear when 10 seconds has passed."));
     unsigned long bienvlope, trienvlope;
+    Thresholds thresholds;
+    unsigned long flushTime = millis();
     //delay data collection for 4 seconds to allow for reading of the message, flush 4 seconds of values
     while (millis() - flushTime < 5000) {
-      bienvlope, trienvlope = readPins();
+      bienvlope = readBi();
+      trienvlope = readTri();
     }
-    unsigned long biThreshold = 0;
-    unsigned long triThreshold = 0;
+    thresholds.biThresh = 0;
+    thresholds.triThresh = 0;
     long startTime = millis();
     //loop for 5 seconds
     while (millis() - startTime < 10000) {
-      bienvlope, trienvlope = readPins();
+      bienvlope = readBi();
+      trienvlope = readTri();
       //Serial.println(bienvlope);
-      if (bienvlope > biThreshold) {
-        biThreshold = bienvlope;
+      if (bienvlope > thresholds.biThresh) {
+        thresholds.biThresh = bienvlope;
       }
       //Serial.println(trienvlope);
-      if (trienvlope > triThreshold) {
-        triThreshold = trienvlope;
+      if (trienvlope > thresholds.triThresh) {
+        thresholds.triThresh = trienvlope;
       }
     }
-    Serial.println("");
-    Serial.println("10 seconds has passed. ");
-    Serial.print("Extension Bicep Threshold: ");
-    Serial.println(biThreshold);
-    Serial.print("Extension Tricep Threshold: ");
-    Serial.println(triThreshold);
-    return(biThreshold, triThreshold);
+    Serial.println(F(""));
+    Serial.println(F("10 seconds has passed. "));
+    Serial.print(F("Extension Bicep Threshold: "));
+    Serial.println(thresholds.biThresh);
+    Serial.print(F("Extension Tricep Threshold: "));
+    Serial.println(thresholds.triThresh);
+    return(thresholds);
   }
 }
 
-int calcFlex(){
+Thresholds calcFlex(){
   //sample at 20/second
   //instantiate a list to hold 30 seconds of thresholding data
 
@@ -171,41 +190,44 @@ int calcFlex(){
   //unsigned long data[100];
 
   //start a timer for 30 seconds
-  Serial.println("");
-  Serial.println("Flex your arm with the sensor in place for 10 seconds.");
-  Serial.println("Attempt maximum flex intensity while maintaining comfort.");
-  Serial.println("This should be the same muscle activty you want to use to put the brace in flexion orientation.");
-  Serial.println("A message will appear when 10 seconds has passed.");
+  Serial.println(F(""));
+  Serial.println(F("Flex your arm with the sensor in place for 10 seconds."));
+  Serial.println(F("Attempt maximum flex intensity while maintaining comfort."));
+  Serial.println(F("This should be the same muscle activty you want to use to put the brace in flexion orientation."));
+  Serial.println(F("A message will appear when 10 seconds has passed."));
   long flushTime = millis();
+  Thresholds thresholds;
   unsigned long bienvlope, trienvlope;
   //delay data collection for 4 seconds to allow for reading of the message, flush 4 seconds of values
   while (millis() - flushTime < 4000) {
-    bienvlope, trienvlope = readPins();
+    bienvlope = readBi();
+    trienvlope = readTri();
   }
-  unsigned long biThreshold = 0;
-  unsigned long triThreshold = 0;
+  thresholds.biThresh = 0;
+  thresholds.triThresh = 0;
   long startTime = millis();
   //loop for 5 seconds
   while (millis() - startTime < 10000) {
-    bienvlope, trienvlope = readPins();
+    bienvlope = readBi();
+    trienvlope = readTri();
     //Serial.println(bienvlope);
-    if (bienvlope > biThreshold) {
-      biThreshold = bienvlope;
+    if (bienvlope > thresholds.biThresh) {
+      thresholds.biThresh = bienvlope;
     }
     //Serial.println(trienvlope);
-    if (trienvlope > triThreshold) {
-      triThreshold = trienvlope;
+    if (trienvlope > thresholds.triThresh) {
+      thresholds.triThresh = trienvlope;
     }
   }
-  Serial.println("");
-  Serial.println("10 seconds has passed. ");
-  Serial.println("");
-  Serial.println("Automated Flexion Thresholding Complete.");
-  Serial.print("Calculated bicep flexion max = ");
-  Serial.println(biThreshold);
-  Serial.print("Calculated tricep flexion max = ");
-  Serial.println(triThreshold);
-  return (biThreshold, triThreshold);
+  Serial.println(F(""));
+  Serial.println(F("10 seconds has passed. "));
+  Serial.println(F(""));
+  Serial.println(F("Automated Flexion Thresholding Complete."));
+  Serial.print(F("Calculated bicep flexion max = "));
+  Serial.println(thresholds.biThresh);
+  Serial.print(F("Calculated tricep flexion max = "));
+  Serial.println(thresholds.triThresh);
+  return(thresholds);
 }
 void actuate(unsigned long biThresh, unsigned long triThresh, unsigned long biFlex, unsigned long triFlex) {
   while (1) {
@@ -225,7 +247,8 @@ void actuate(unsigned long biThresh, unsigned long triThresh, unsigned long biFl
     //gather .5 seconds of sensor inputs
     while (millis() - startTime < 500) {
       //read bicep sensor
-      bienvlope, trienvlope = readPins();
+      bienvlope = readBi();
+      trienvlope = readTri();
       
       //keep track of instances greater or less than thresholds
       if (bienvlope > biExt) {   
@@ -258,19 +281,19 @@ void actuate(unsigned long biThresh, unsigned long triThresh, unsigned long biFl
       if (bf>=10 and tf>=10) {
         //potentially use this later to map servo actuation to amplitude of max flexion value
         //val = map(val, 0, 1023, 0, 180);     // scale it to use it with the servo (value between 0 and 180)
-        Serial.print("number of bicep samples indicating flexion: ");
+        Serial.print(F("number of bicep samples indicating flexion: "));
         Serial.println(bf);
-        Serial.print("number of tricep samples indicating flexion: ");
+        Serial.print(F("number of tricep samples indicating flexion: "));
         Serial.println(tf);
-        Serial.print("number of bicep samples indicating extension: ");
+        Serial.print(F("number of bicep samples indicating extension: "));
         Serial.println(be);
-        Serial.print("number of tricep samples indicating extension: ");
+        Serial.print(F("number of tricep samples indicating extension: "));
         Serial.println(te);
-        Serial.println("flexing servo");  
+        Serial.println(F("flexing servo"));  
         //create a variable speed activation based on the amount of bicep samples indicating flexion
         //slowest speed takes 2.5 seconds to flex
         //val = map(bf, 0, bcount , 0, 180);
-        Serial.println("flexing servo"); 
+        Serial.println(F("flexing servo")); 
         Serial.println(180*10*bcount/bf); 
         for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
           // in steps of 1 degree
@@ -280,15 +303,15 @@ void actuate(unsigned long biThresh, unsigned long triThresh, unsigned long biFl
         }
         //Serial.println(myservo.read());
       } else if (be>=10 and te>=10) {
-        Serial.print("number of bicep samples indicating flexion: ");
+        Serial.print(F("number of bicep samples indicating flexion: "));
         Serial.println(bf);
-        Serial.print("number of tricep samples indicating flexion: ");
+        Serial.print(F("number of tricep samples indicating flexion: "));
         Serial.println(tf);
-        Serial.print("number of bicep samples indicating extension: ");
+        Serial.print(F("number of bicep samples indicating extension: "));
         Serial.println(be);
-        Serial.print("number of tricep samples indicating extension: ");
+        Serial.print(F("number of tricep samples indicating extension: "));
         Serial.println(te);
-        Serial.println("extending servo");
+        Serial.println(F("extending servo"));
         Serial.println(180*10*bcount/be); 
         for (pos = 180; pos >= 0; pos -= 1) { // goes from 0 degrees to 180 degrees
           // in steps of 1 degree
@@ -298,15 +321,15 @@ void actuate(unsigned long biThresh, unsigned long triThresh, unsigned long biFl
         }
         //Serial.println(myservo.read());
       } else if (bf>=10 and te>=10) {
-        Serial.print("number of bicep samples indicating flexion: ");
+        Serial.print(F("number of bicep samples indicating flexion: "));
         Serial.println(bf);
-        Serial.print("number of tricep samples indicating flexion: ");
+        Serial.print(F("number of tricep samples indicating flexion: "));
         Serial.println(tf);
-        Serial.print("number of bicep samples indicating extension: ");
+        Serial.print(F("number of bicep samples indicating extension: "));
         Serial.println(be);
-        Serial.print("number of tricep samples indicating extension: ");
+        Serial.print(F("number of tricep samples indicating extension: "));
         Serial.println(te);
-        Serial.println("neutral servo");
+        Serial.println(F("neutral servo"));
         int loc = myservo.read();
         if (loc > 90){
           Serial.println(180*10*tcount/te); 
@@ -327,25 +350,30 @@ void actuate(unsigned long biThresh, unsigned long triThresh, unsigned long biFl
           }
         }
       } else {
-        Serial.print("number of bicep samples indicating flexion: ");
+        Serial.print(F("number of bicep samples indicating flexion: "));
         Serial.println(bf);
-        Serial.print("number of tricep samples indicating flexion: ");
+        Serial.print(F("number of tricep samples indicating flexion: "));
         Serial.println(tf);
-        Serial.print("number of bicep samples indicating extension: ");
+        Serial.print(F("number of bicep samples indicating extension: "));
         Serial.println(be);
-        Serial.print("number of tricep samples indicating extension: ");
+        Serial.print(F("number of tricep samples indicating extension: "));
         Serial.println(te);
-        Serial.println("Inconclusive data, do nothing.");
+        Serial.println(F("Inconclusive data, do nothing."));
       }
     }
   }
 }
 void loop() {
   unsigned long biExtendThresh, triExtendThresh, biFlexThresh, triFlexThresh;
+  Thresholds thresholds;
   //get threshold values for extension
   confirmSensors();
-  biExtendThresh, triExtendThresh = calcExtend();
+  thresholds = calcExtend();
+  biExtendThresh = thresholds.biThresh; 
+  triExtendThresh = thresholds.triThresh; 
   //get threshold values for flexion
-  biFlexThresh, triFlexThresh = calcFlex();
+  thresholds = calcFlex();
+  biFlexThresh = thresholds.biThresh; 
+  triFlexThresh = thresholds.triThresh; 
   actuate(biExtendThresh, triExtendThresh, biFlexThresh, triFlexThresh);
 }
