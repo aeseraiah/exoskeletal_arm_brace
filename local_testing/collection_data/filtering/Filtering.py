@@ -3,15 +3,14 @@ import matplotlib.pyplot as plt
 import scipy
 import pandas as pd
 import pathlib
-from collection_data.interpolation import create_duration_amplitude_file, interpolate
+# from collection_data.interpolation import create_duration_amplitude_file, interpolate
 import mne.filter as filter
 
 
 # Josiah / Natalie
 
 def Filtering(file_path, graphtitle, sample_rate, filtered_plot = False):
-     
-    filter_order = 20
+    filter_order = 2
     low_freq = 20
     high_freq = 150
 
@@ -37,18 +36,20 @@ def Filtering(file_path, graphtitle, sample_rate, filtered_plot = False):
     if(filtered_plot == True):
         plt.clf()
         plt.subplot(2,1,1) # 2 rows, 1 column, 1st subplot
-        plt.title(f"{graphtitle} (Gravity Board Filtering)")
+        plt.title(f"{graphtitle} Unfiltered")
         plt.plot(times, amplitudes, label = "Unfiltered") #, marker='o')
         plt.xlabel("Time (Seconds)")
         plt.ylabel("Amplitude (mV^2)")
         plt.legend()
 
         plt.subplot(2,1,2)
-        plt.title(f"{graphtitle} (Gravity Board Filtering)")
+        plt.title(f"{graphtitle} Filtered")
         plt.plot(times, filtered_amplitudes, label = "Filtered") #, marker='o')
         plt.xlabel("Time (Seconds)")
         plt.ylabel("Amplitude (mV^2)")
         plt.legend()
+
+        plt.savefig("Unfiltered_Vs_Filtered.png")
 
         plt.show()
 
@@ -63,4 +64,4 @@ path = 'amplitude_and_durations_900Hz.csv'
 # filtered_plot = True -> plot the before and after the filtering 
 #                 False -> plot nothing
 
-Filtering(path, graphtitle = Graph_Title, sample_rate=1830, filtered_plot = True)
+Filtering(path, graphtitle = Graph_Title, sample_rate=1000, filtered_plot = True)
