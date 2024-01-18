@@ -28,8 +28,10 @@ def Filtering(file_path, graphtitle, sample_rate, filtered_plot = False):
 
 
 
-    b, a = scipy.signal.butter(filter_order, [low_freq,high_freq], btype='band', fs=sample_rate, output='ba')
-    filtered_amplitudes = scipy.signal.lfilter(b, a, times)
+    sos = scipy.signal.butter(filter_order, high_freq, btype='low', fs=sample_rate, output='sos')
+    filtered_amplitudes = scipy.signal.sosfilt(sos, amplitudes)
+    sos = scipy.signal.butter(filter_order, low_freq, btype='high', fs=sample_rate, output='sos')
+    filtered_amplitudes = scipy.signal.sosfilt(sos, filtered_amplitudes)
 
 
 
