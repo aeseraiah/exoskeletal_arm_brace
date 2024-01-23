@@ -149,6 +149,7 @@ double calculateRMS(unsigned long buffer[], int size) {
   return sqrt(sumOfSquares / size);
 }
 
+
 void loop() {
   // put your main code here, to run repeatedly:
   unsigned long biThresh, triThresh;
@@ -174,23 +175,106 @@ void loop() {
   //   Serial.println(F("Time to get 1000 samples (ms):"));
   //   Serial.print(millis() - start);
   // }
+}
 
-  unsigned long end_time = millis() + 250;  // Set end time for 250 milliseconds or 1/4 seconds
+void loop() {
+  // ... (existing code)
 
-  while (millis() < end_time) {  // Loop for 1/4 seconds
-    for (samples = 0; samples < 1000; samples++) {
-      biBuffer[samples] = readBi();
-      triBuffer[samples] = readTri();
+  // Variables for labeling
+  unsigned long labelStartTime = millis();
+  unsigned long labelDuration = 250; // 1/4 second
+  unsigned long switchDuration = 5000; // 5 seconds
+  String currentLabel = "unknown";
+
+  while (1) {
+    // Check the current state based on the labeling timing
+    unsigned long currentTime = millis();
+    unsigned long elapsedTime = currentTime - labelStartTime;
+    
+    if (elapsedTime >= switchDuration) {
+      // Switch label every 5 seconds
+      labelStartTime = currentTime;
+      if (currentLabel == "flexion") {
+        currentLabel = "extension";
+      } else {
+        currentLabel = "flexion";
+      }
+    }
+
+    // Repeat each label 4 times within a second
+    for (int i = 0; i < 4; i++) {
+      // Buffer and RMS calculation
+      int samples;
+      unsigned long biBuffer[1000];
+      unsigned long triBuffer[1000];
+
+      // Read in samples for 1/4 seconds
+      unsigned long bufferStartTime = millis();
+      while (millis() - bufferStartTime < labelDuration) {
+        for (samples = 0; samples < 1000; samples++) {
+          biBuffer[samples] = readBi();
+          triBuffer[samples] = readTri();
+        }
+      }
+
+      // Calculate RMS for biBuffer and triBuffer
+      double biRMS = calculateRMS(biBuffer, 1000);
+      double triRMS = calculateRMS(triBuffer, 1000);
+
+      // Print RMS values and current label
+      Serial.print(biRMS);
+      Serial.print(",");
+      Serial.print(triRMS);
+      Serial.print(",");
+      Serial.println(currentLabel);
     }
   }
-
-  // Calculate RMS for biBuffer and triBuffer
-  double biRMS = calculateRMS(biBuffer, 1000);
-  double triRMS = calculateRMS(triBuffer, 1000);
-
-  // Print RMS values
-  Serial.println(F("RMS for biBuffer:"));
-  Serial.print(biRMS);
-  Serial.println(F(" RMS for triBuffer:"));
-  Serial.print(triRMS);
 }
+
+// 10 seconds of data where the label switches between "flexion" and "extension" every 5 seconds, and each label is repeated 4 times within a single second
+// csv/print output should have this format:
+// 11.78,17.92,flexion
+// 13.21,19.05,flexion
+// 10.98,16.78,flexion
+// 14.32,20.14,flexion
+// 12.65,18.42,flexion
+// 13.87,19.78,flexion
+// 11.54,17.21,flexion
+// 12.89,18.97,flexion
+// 13.45,19.32,flexion
+// 12.12,18.15,flexion
+// 14.01,20.05,flexion
+// 11.76,17.86,flexion
+// 13.28,19.12,flexion
+// 12.45,18.23,flexion
+// 14.02,20.07,flexion
+// 11.78,17.92,flexion
+// 13.21,19.05,flexion
+// 10.98,16.78,flexion
+// 14.32,20.14,flexion
+// 14.32,20.14,flexion
+// 14.32,20.14,flexion
+// 14.32,20.14,flexion
+// 14.32,20.14,flexion
+// 14.32,20.14,flexion
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+// 14.32,20.14,extension
+
