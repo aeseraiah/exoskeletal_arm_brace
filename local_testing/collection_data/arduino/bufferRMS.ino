@@ -141,6 +141,14 @@ void actuateServo(){
 //5. activate servo in based on activation response (keep track of current location and slow the movement as it is close to the endpoints)
 //6. enter loop again
 
+double calculateRMS(unsigned long buffer[], int size) {
+  double sumOfSquares = 0.0;
+  for (int i = 0; i < size; i++) {
+    sumOfSquares += sq(buffer[i]);
+  }
+  return sqrt(sumOfSquares / size);
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
   unsigned long biThresh, triThresh;
@@ -158,12 +166,31 @@ void loop() {
   int samples = 0;
   unsigned long biBuffer[1000];
   unsigned long triBuffer[1000];
-  while (1){
-    for (samples = 0; samples<1000; samples ++){
+  // while (1){
+  //   for (samples = 0; samples<1000; samples ++){
+  //     biBuffer[samples] = readBi();
+  //     triBuffer[samples] = readTri();
+  //   }
+  //   Serial.println(F("Time to get 1000 samples (ms):"));
+  //   Serial.print(millis() - start);
+  // }
+
+  unsigned long end_time = millis() + 250;  // Set end time for 250 milliseconds or 1/4 seconds
+
+  while (millis() < end_time) {  // Loop for 1/4 seconds
+    for (samples = 0; samples < 1000; samples++) {
       biBuffer[samples] = readBi();
       triBuffer[samples] = readTri();
     }
-    Serial.println(F("Time to get 1000 samples (ms):"));
-    Serial.print(millis() - start);
   }
+
+  // Calculate RMS for biBuffer and triBuffer
+  double biRMS = calculateRMS(biBuffer, 1000);
+  double triRMS = calculateRMS(triBuffer, 1000);
+
+  // Print RMS values
+  Serial.println(F("RMS for biBuffer:"));
+  Serial.print(biRMS);
+  Serial.println(F(" RMS for triBuffer:"));
+  Serial.print(triRMS);
 }
