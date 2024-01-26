@@ -11,6 +11,7 @@
 
 EMGFilters myFilter1;
 EMGFilters myFilter2;
+//Servo myservo;
 // discrete filters must works with fixed sample frequence
 // our emg filter only support "SAMPLE_FREQ_500HZ" or "SAMPLE_FREQ_1000HZ"
 // other sampleRate inputs will bypass all the EMG_FILTER
@@ -34,6 +35,7 @@ void setup() {
   myFilter1.init(sampleRate, humFreq, true, true, true);
   myFilter2.init(sampleRate, humFreq, true, true, true);
   timeBudget = 1e6/sampleRate;
+  //myservo.attach(9);
   //input pulldown is not declared? Might not exist for this processor
   //pinMode (BiSensorInputPin, INPUT_PULLDOWN);
   //pinMode (TriSensorInputPin, INPUT_PULLDOWN);
@@ -143,9 +145,16 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
     }
   }
 }
-void actuateServo(){
-  
-}
+//void actuateServo(int target){
+//  int curr = myServo.read();
+//  int distance = target - distance;
+//  int factor = 
+//  while(curr < target){
+//    factor = 
+//    myServo.write(factor);
+//    curr = myServo.read();
+//  }
+//}
 //1. get thresholds for both tricep and bicep
 //LOOP:
 //2. read in 1/4 seconds worth of samples into tribuffer and bibuffer
@@ -172,16 +181,22 @@ void loop() {
   int samples;
   unsigned int biBuffer[250];
   unsigned int triBuffer[250];
+  double bisumOfSquares;
+  double trisumOfSquares;
   while (1){
+    bisumOfSquares = 0;
+    trisumOfSquares = 0;
     for (samples = 0; samples<250; samples ++){
       start = micros();
       biBuffer[samples] = readBi();
       triBuffer[samples] = readTri();
+      bisumOfSquares += sq(biBuffer[samples]);
+      trisumOfSquares += sq(triBuffer[samples]);
       end = micros();
       delayMicroseconds(timeBudget - (end-start));
     }
-    biRMS = calculateRMS(biBuffer, 250);
-    triRMS = calculateRMS(triBuffer, 250);
+    biRMS = sqrt(bisumOfSquares / samples);
+    triRMS = sqrt(trisumOfSquares / samples);
   }
   
 }
