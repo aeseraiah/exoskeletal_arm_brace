@@ -14,7 +14,7 @@ EMGFilters myFilter2;
 // discrete filters must works with fixed sample frequence
 // our emg filter only support "SAMPLE_FREQ_500HZ" or "SAMPLE_FREQ_1000HZ"
 // other sampleRate inputs will bypass all the EMG_FILTER
-int sampleRate = SAMPLE_FREQ_1000HZ;
+int sampleRate = SAMPLE_FREQ_500HZ;
 // For countries where power transmission is at 50 Hz
 // For countries where power transmission is at 60 Hz, need to change to
 // "NOTCH_FREQ_60HZ"
@@ -45,19 +45,19 @@ void setup() {
 unsigned int readBi() {
     unsigned int biValue, biDataAfterFilter, bienvlope;
     biValue = analogRead(BiSensorInputPin);
-    // biDataAfterFilter = myFilter1.update(biValue);
-    // bienvlope = sq(biDataAfterFilter);
-    // return(bienvlope);
-    return(biValue);
+    biDataAfterFilter = myFilter1.update(biValue);
+    bienvlope = sq(biDataAfterFilter);
+    return(bienvlope);
+    // return(biValue);
 }
 
 unsigned int readTri() {
     unsigned int triValue, triDataAfterFilter, trienvlope;
     triValue = analogRead(TriSensorInputPin);
-    // triDataAfterFilter = myFilter2.update(triValue);
-    // trienvlope = sq(triDataAfterFilter);
-    // return(trienvlope);
-    return(triValue);
+    triDataAfterFilter = myFilter2.update(triValue);
+    trienvlope = sq(triDataAfterFilter);
+    return(trienvlope);
+    // return(triValue);
 }
 void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
   unsigned long start, end;
@@ -82,18 +82,21 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
     while (millis() - startTime < 5000) {
       start = micros();
       bienvlope = readBi();
-      trienvlope = readTri();
+      // trienvlope = readTri();
       
       Serial.print("Bi: ");
       Serial.println(bienvlope);
-      Serial.print("Tri: ");
-      Serial.println(trienvlope);
+      // Serial.print("Tri: ");
+      // Serial.println(trienvlope);
       if (bienvlope > biThreshold) {
         biThreshold = bienvlope;
         Serial.print(F("High Bicep Value: "));
         Serial.println(biThreshold);
       }
       //Serial.println(trienvlope);
+      trienvlope = readTri();
+      Serial.print("Tri: ");
+      Serial.println(trienvlope);
       if (trienvlope > triThreshold) {
         triThreshold = trienvlope;
         Serial.print(F("High Tricep Value: "));
@@ -166,20 +169,66 @@ double calculateRMS(unsigned int buffer[], int size) {
   return sqrt(sumOfSquares / size);
 }
 
+// void loop() {
+//   double biRMS, triRMS;
+//   unsigned int biThresh, triThresh;
+//   //confirmSensors(biThresh, triThresh);
+//   unsigned long initial, start, end;
+//   unsigned long time = 0;
+//   unsigned int biBuffer[250]; //array of 250 elements
+//   unsigned int triBuffer[250];
+//   int samples;
+//   unsigned long labelStartTime = millis(); // initializes the time that labels are defined 
+//   unsigned long labelDuration = 250; // 1/4 second 
+//   unsigned long switchDuration = 5000; // 5 seconds
+//   String currentLabel = "unknown"; 
+
+//   while (1){
+//     unsigned long currentTime = millis();
+//     unsigned long elapsedTime = currentTime - labelStartTime;
+
+//     if (elapsedTime >= switchDuration) {
+//       // Switch label every 5 seconds
+//       labelStartTime = currentTime;
+//       if (currentLabel == "flexion") {
+//         currentLabel = "extension";
+//       } else {
+//         labelStartTime = millis();
+//         currentLabel = "flexion";
+//       }
+//     }
+    
+//     for (samples = 0; samples<250; samples ++){
+//       start = micros();
+//       biBuffer[samples] = readBi();
+//       triBuffer[samples] = readTri();
+//       end = micros();
+//       delayMicroseconds(timeBudget - (end-start));
+//     }
+
+//     biRMS = calculateRMS(biBuffer, 250);
+//     triRMS = calculateRMS(triBuffer, 250);
+//     Serial.print(biRMS);
+//     Serial.print(",");
+//     Serial.print(triRMS);
+//     Serial.print(",");
+//     Serial.println(currentLabel);
+//   }
+// }
 void loop() {
   // put your main code here, to run repeatedly:
   double biRMS, triRMS;
   unsigned int biThresh, triThresh;
-  // confirmSensors(biThresh, triThresh);
+  confirmSensors(biThresh, triThresh);
   unsigned long start, end, initial;
   unsigned long time = 0;
   int samples;
-  unsigned int biBuffer[250];
-  unsigned int triBuffer[250];
+  unsigned int biBuffer[125];
+  unsigned int triBuffer[125];
   double bisumOfSquares;
   double trisumOfSquares;
   unsigned long labelStartTime = millis(); // initializes the time that labels are defined 
-  unsigned long labelDuration = 250; // 1/4 second 
+  unsigned long labelDuration = 125; // 1/4 second 
   unsigned long switchDuration = 5000; // 5 seconds
   String currentLabel = "unknown"; 
 
@@ -201,7 +250,7 @@ void loop() {
     bisumOfSquares = 0;
     trisumOfSquares = 0;
     initial = micros();
-    for (samples = 0; samples<250; samples ++){
+    for (samples = 0; samples<125; samples ++){
       start = micros();
       biBuffer[samples] = readBi();
       triBuffer[samples] = readTri();
