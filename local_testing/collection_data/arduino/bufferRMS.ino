@@ -14,7 +14,7 @@ EMGFilters myFilter2;
 // discrete filters must works with fixed sample frequence
 // our emg filter only support "SAMPLE_FREQ_500HZ" or "SAMPLE_FREQ_1000HZ"
 // other sampleRate inputs will bypass all the EMG_FILTER
-int sampleRate = SAMPLE_FREQ_500HZ;
+int sampleRate = SAMPLE_FREQ_1000HZ;
 // For countries where power transmission is at 50 Hz
 // For countries where power transmission is at 60 Hz, need to change to
 // "NOTCH_FREQ_60HZ"
@@ -39,22 +39,25 @@ void setup() {
   //pinMode (TriSensorInputPin, INPUT_PULLDOWN);
   // open serial
   Serial.begin(230400);
+  // Serial.begin(250000);
 }
 
 unsigned int readBi() {
     unsigned int biValue, biDataAfterFilter, bienvlope;
     biValue = analogRead(BiSensorInputPin);
-    biDataAfterFilter = myFilter1.update(biValue);
-    bienvlope = sq(biDataAfterFilter);
-    return(bienvlope);
+    // biDataAfterFilter = myFilter1.update(biValue);
+    // bienvlope = sq(biDataAfterFilter);
+    // return(bienvlope);
+    return(biValue);
 }
 
 unsigned int readTri() {
     unsigned int triValue, triDataAfterFilter, trienvlope;
     triValue = analogRead(TriSensorInputPin);
-    triDataAfterFilter = myFilter2.update(triValue);
-    trienvlope = sq(triDataAfterFilter);
-    return(trienvlope);
+    // triDataAfterFilter = myFilter2.update(triValue);
+    // trienvlope = sq(triDataAfterFilter);
+    // return(trienvlope);
+    return(triValue);
 }
 void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
   unsigned long start, end;
@@ -164,14 +167,17 @@ double calculateRMS(unsigned int buffer[], int size) {
 }
 
 void loop() {
+  // put your main code here, to run repeatedly:
   double biRMS, triRMS;
   unsigned int biThresh, triThresh;
-  //confirmSensors(biThresh, triThresh);
-  unsigned long initial, start, end;
+  // confirmSensors(biThresh, triThresh);
+  unsigned long start, end, initial;
   unsigned long time = 0;
-  unsigned int biBuffer[250]; //array of 250 elements
-  unsigned int triBuffer[250];
   int samples;
+  unsigned int biBuffer[250];
+  unsigned int triBuffer[250];
+  double bisumOfSquares;
+  double trisumOfSquares;
   unsigned long labelStartTime = millis(); // initializes the time that labels are defined 
   unsigned long labelDuration = 250; // 1/4 second 
   unsigned long switchDuration = 5000; // 5 seconds
@@ -191,22 +197,34 @@ void loop() {
         currentLabel = "flexion";
       }
     }
-    
+
+    bisumOfSquares = 0;
+    trisumOfSquares = 0;
+    initial = micros();
     for (samples = 0; samples<250; samples ++){
       start = micros();
       biBuffer[samples] = readBi();
       triBuffer[samples] = readTri();
+      bisumOfSquares += sq(biBuffer[samples]);
+      trisumOfSquares += sq(triBuffer[samples]);
       end = micros();
       delayMicroseconds(timeBudget - (end-start));
     }
+    time = micros() - initial;
 
-    biRMS = calculateRMS(biBuffer, 250);
-    triRMS = calculateRMS(triBuffer, 250);
+    // TESTING SAMPLING RATE:
+    // Serial.println(time);
+    // Serial.print(F("current sampling rate in Hz: "));
+    // Serial.println(double(samples*1000000)/double(time));
+    
+    biRMS = sqrt(bisumOfSquares / samples);
+    triRMS = sqrt(trisumOfSquares / samples);
     Serial.print(biRMS);
     Serial.print(",");
     Serial.print(triRMS);
     Serial.print(",");
     Serial.println(currentLabel);
   }
+  
 }
 
