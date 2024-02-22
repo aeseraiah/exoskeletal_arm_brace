@@ -82,22 +82,22 @@ void loop() {
       uint16_t input_shape[] = {16, 2};    // Definition of the input shape
       // Corresponds to the XOR truth table
       float input_data[16*2] = {
-        60.0f, 50.0f,
-        65.0f, 55.0f,
-        61.0f, 58.0f,
-        63.0f, 53.0f,
-        40.0f, 30.0f,
-        42.0f, 35.0f,
-        45.0f, 38.0f,
-        39.0f, 42.0f
-        60.0f, 50.0f,
-        65.0f, 55.0f,
-        61.0f, 58.0f,
-        63.0f, 53.0f,
-        40.0f, 30.0f,
-        42.0f, 35.0f,
-        45.0f, 38.0f,
-        39.0f, 42.0f
+        33.05f,32.89f,
+        87.00f,77.51f,
+        94.27f,81.90f,
+        96.67f,78.30f,
+        78.28f,61.53f,
+        95.32f,76.87f,
+        78.22f,53.66f,
+        92.20f,75.80f,
+        15.47f,21.14f,
+        53.86f,57.77f,
+        70.11f,75.33f,
+        66.01f,75.66f,
+        33.61f,48.81f,
+        82.46f,85.92f,
+        49.10f,62.33f,
+        42.28f,48.70f
       };
       // Two dimensional(2D)array example
       // The "Serial.print" output must then be modified
@@ -115,10 +115,10 @@ void loop() {
       uint16_t target_shape[] = {16, 1};     // Definition of the input shape
       // Corresponds to the XOR truth table
       float target_data[16*1] = {
-        1.0f,
-        1.0f,
-        1.0f,
-        1.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
         0.0f,
         0.0f,
         0.0f,
@@ -127,10 +127,10 @@ void loop() {
         1.0f,
         1.0f,
         1.0f,
-        0.0f,
-        0.0f,
-        0.0f,
-        0.0f
+        1.0f,
+        1.0f,
+        1.0f,
+        1.0f,
       };
       aitensor_t target_tensor = AITENSOR_2D_F32(target_shape, target_data); // Assign the target_data array to the tensor. It expects a pointer to the array where the data is stored
       
@@ -144,14 +144,18 @@ void loop() {
 
       uint16_t input_layer_shape[] = {1, 2};          // Definition of the input layer shape (Must fit to the input tensor)
       ailayer_input_f32_t   input_layer     = AILAYER_INPUT_F32_A( /*input dimension=*/ 2, /*input shape=*/ input_layer_shape);   // Creation of the AIfES input layer
-      ailayer_dense_f32_t   dense_layer_1   = AILAYER_DENSE_F32_A( /*neurons=*/ 5); // Creation of the AIfES hidden dense layer with 3 neurons
-      ailayer_sigmoid_f32_t sigmoid_layer_1 = AILAYER_SIGMOID_F32_A(); // Hidden activation function
+      ailayer_dense_f32_t   dense_layer_1   = AILAYER_DENSE_F32_A( /*neurons=*/ 50); // Creation of the AIfES hidden dense layer with 3 neurons
       ailayer_relu_f32_t relu_layer_1 = AILAYER_RELU_F32_A(); // Hidden activation function
-      ailayer_dense_f32_t   dense_layer_2   = AILAYER_DENSE_F32_A( /*neurons=*/ 1); // Creation of the AIfES output dense layer with 1 neuron
-      ailayer_sigmoid_f32_t sigmoid_layer_2 = AILAYER_SIGMOID_F32_A(); // Output activation function
+      ailayer_dense_f32_t   dense_layer_2   = AILAYER_DENSE_F32_A( /*neurons=*/ 25); // Creation of the AIfES hidden dense layer with 3 neurons
+      ailayer_relu_f32_t relu_layer_2 = AILAYER_RELU_F32_A(); // Hidden activation function
+      ailayer_dense_f32_t   dense_layer_3   = AILAYER_DENSE_F32_A( /*neurons=*/ 12); // Creation of the AIfES hidden dense layer with 3 neurons
+      ailayer_relu_f32_t relu_layer_3 = AILAYER_RELU_F32_A(); // Hidden activation function
+      ailayer_dense_f32_t   dense_layer_4   = AILAYER_DENSE_F32_A( /*neurons=*/ 1); // Creation of the AIfES output dense layer with 1 neuron
+      ailayer_sigmoid_f32_t sigmoid_layer_1 = AILAYER_SIGMOID_F32_A(); // Output activation function
       
-      ailoss_mse_t mse_loss;                          //Loss: mean squared error
-      
+      // ailoss_mse_t mse_loss;                          //Loss: mean squared error
+      ailoss_crossentropy_t crossentropy_loss;
+
       // --------------------------- Define the structure of the model ----------------------------
       
       aimodel_t model;  // AIfES model
@@ -160,15 +164,19 @@ void loop() {
       // Connect the layers to an AIfES model
       model.input_layer = ailayer_input_f32_default(&input_layer);
       x = ailayer_dense_f32_default(&dense_layer_1, model.input_layer);
-//      x = ailayer_sigmoid_f32_default(&sigmoid_layer_1, x);
       x = ailayer_relu_f32_default(&relu_layer_1, x);
       x = ailayer_dense_f32_default(&dense_layer_2, x);
-      x = ailayer_sigmoid_f32_default(&sigmoid_layer_2, x);
+      x = ailayer_relu_f32_default(&relu_layer_2, x);
+      x = ailayer_dense_f32_default(&dense_layer_3, x);
+      x = ailayer_relu_f32_default(&relu_layer_3, x);
+      x = ailayer_dense_f32_default(&dense_layer_4, x);
+      x = ailayer_sigmoid_f32_default(&sigmoid_layer_1, x);
       model.output_layer = x;
       
       // Add the loss to the AIfES model
-      model.loss = ailoss_mse_f32_default(&mse_loss, model.output_layer);
-      
+      // model.loss = ailoss_mse_f32_default(&mse_loss, model.output_layer);
+      model.loss = ailoss_crossentropy_f32_default(&crossentropy_loss, model.output_layer);
+
       aialgo_compile_model(&model); // Compile the AIfES model
       
       // ------------------------------------- Print the model structure ------------------------------------
@@ -215,12 +223,12 @@ void loop() {
       // -------------------------------- Define the optimizer for training ---------------------
       
       // Adam optimizer
-      aiopti_adam_f32_t adam_opti = AIOPTI_ADAM_F32(/*learning rate=*/ 0.1f, /*beta_1=*/ 0.9f, /*beta_2=*/ 0.999f, /*eps=*/ 1e-7);
+      aiopti_adam_f32_t adam_opti = AIOPTI_ADAM_F32(/*learning rate=*/ 0.001f, /*beta_1=*/ 0.9f, /*beta_2=*/ 0.999f, /*eps=*/ 1e-7);
       aiopti_t *optimizer = aiopti_adam_f32_default(&adam_opti); // Initialize the optimizer
       
       // Alternative 1: Stochastic Gradient Descent optimizer (SGD)
-      //aiopti_sgd_f32_t sgd_opti = AIOPTI_SGD_F32(/*learning rate=*/ 0.1f);
-      //aiopti_t *optimizer = aiopti_sgd_f32_default(&sgd_opti);
+      // aiopti_sgd_f32_t sgd_opti = AIOPTI_SGD_F32(/*learning rate=*/ 0.001f);
+      // aiopti_t *optimizer = aiopti_sgd_f32_default(&sgd_opti);
 
       // Alternative 2: Stochastic Gradient Descent optimizer (SGD) with momentum
       //aiopti_sgd_f32_t sgd_opti = AIOPTI_SGD_WITH_MOMENTUM_F32(/*learning rate=*/ 0.1f, /*momentum=*/ 0.9f);
@@ -232,6 +240,9 @@ void loop() {
       Serial.print(F("Required memory for the training (Intermediate results, gradients, optimization memory): "));
       Serial.print(memory_size);
       Serial.print(F(" bytes"));
+      Serial.println();
+      Serial.print(parameter_memory_size+memory_size);
+      Serial.print(F(" total bytes required"));
       Serial.println();
       byte *memory_ptr = (byte *) malloc(memory_size);
 
@@ -258,7 +269,7 @@ void loop() {
       Serial.println(F("Results:"));
       Serial.println(F("input 1:\tinput 2:\treal output:\tcalculated output:"));
       
-      for (i = 0; i < 4; i++) {
+      for (i = 0; i < 16; i++) {
         Serial.print(input_data[input_counter]);
         //Serial.print(((float* ) input_tensor.data)[i]); //Alternative print for the tensor
         input_counter++;
@@ -274,9 +285,9 @@ void loop() {
 
       // ------------------------------------- Training configuration ------------------------------------
       
-      uint32_t batch_size = 4; // Configuration tip: ADAM=4   / SGD=1
+      uint32_t batch_size = 1; // Configuration tip: ADAM=4   / SGD=1
       uint16_t epochs = 100;   // Configuration tip: ADAM=100 / SGD=550
-      uint16_t print_interval = 10;
+      uint16_t print_interval = 5;
       
       Serial.println(F("\n------------ Training configuration ----------"));
       Serial.print(F("Epochs: "));
@@ -320,12 +331,15 @@ void loop() {
       Serial.println(F(""));
       Serial.println(F("After training:"));
       Serial.println(F("Results:"));
-      Serial.println(F("input 1:\tinput 2:\treal output:\tcalculated output:"));
+      Serial.println(F("input 1:\tinput 2:\treal output:\tcalculated output:\tpredicted label:"));
       
       input_counter = 0;
+      float predicted_labels[16*1];
+      int correct_predictions = 0;
+      int total_predictions = 16;
       
       for (i = 0; i < 16; i++) {
-        Serial.print (input_data[input_counter]);
+        Serial.print(input_data[input_counter]);
         //Serial.print(((float* ) input_tensor.data)[i]); //Alternative print for the tensor
         input_counter++;
         Serial.print(F("\t\t"));
@@ -334,19 +348,34 @@ void loop() {
         Serial.print(F("\t\t"));
         Serial.print(target_data[i]);
         Serial.print(F("\t\t"));
-        Serial.println(output_data[i]);
+        Serial.print(output_data[i]);
+        if (output_data[i] > 0.5) {
+          predicted_labels[i] = 1;
+        } 
+        else {
+          predicted_labels[i] = 0;
+        }
+        Serial.print(F("\t\t\t"));
+        Serial.println(predicted_labels[i]);
+
+        if (predicted_labels[i] == target_data[i]) {
+          correct_predictions++;
+        }
+
         //Serial.println(((float* ) output_tensor.data)[i]); //Alternative print for the tensor
       }
-      
+
+      float accuracy = (float)correct_predictions / total_predictions * 100;
+      Serial.print("Accuracy: ");
+      Serial.print(accuracy);
+      Serial.println("%");
+            
       // How to print the weights example
       // Serial.println(F("Dense 1 - Weights:"));
       // print_aitensor(&dense_layer_1.weights);
       // Serial.println(F("Dense 1 - Bias:"));
       // print_aitensor(&dense_layer_1.bias);
       
-      Serial.println();
-      Serial.println(F("A learning success is not guaranteed"));
-      Serial.println(F("The weights were initialized randomly"));
       Serial.println(F("You can repeat the training with >training<"));
       
       free(parameter_memory);
