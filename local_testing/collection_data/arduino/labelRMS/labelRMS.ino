@@ -531,14 +531,19 @@ void loop() {
 
   // String currentLabel = "unknown"; 
   String currentLabel = "flexion";
+  String newLabel = "extension";
 
   while (1){
     unsigned long currentTime = millis();
     unsigned long elapsedTime = currentTime - labelStartTime;
 
+    if (currentLabel == "flexion") {
+      newLabel = "extension";
+    }
+
     if (elapsedTime >= switchDuration) {
       Serial.print("Start ");
-      Serial.print(currentLabel);
+      Serial.print(newLabel);
       Serial.println(" in: ");
       Serial.println("5");
       delay(1000);
@@ -603,6 +608,9 @@ void loop() {
 
     if (elapsedtime >= labelDuration_model_training) {
       if (emgIndex == num_data_points) {
+        Serial.println("Relax arm. Model training will now begin");
+        delay(5000);
+        time = millis();
         StartTime = time;
         float accuracy = model_training(emgData, num_data_points); 
         // if model accuracy is above 85%, reak out of loop and continue to actuation of servo:
