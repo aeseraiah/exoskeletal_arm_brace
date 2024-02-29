@@ -525,8 +525,8 @@ void loop() {
   unsigned long labelStartTime = millis(); // initializes the time that labels are defined 
   unsigned long StartTime = millis(); // initializes the time that labels are defined, but it kept separate for model training
   unsigned long labelDuration = 125; // 1/4 second 
-  unsigned long switchDuration = 1000; // 2 seconds
-  unsigned long labelDuration_model_training = 8000; // collect and label data for 4 seconds, then start model training
+  unsigned long switchDuration = 2000; // 2 seconds
+  unsigned long labelDuration_model_training = 4000; // collect and label data for 4 seconds, then start model training
   bool should_break_void_loop = false; 
 
   // String currentLabel = "unknown"; 
@@ -537,38 +537,26 @@ void loop() {
     unsigned long elapsedTime = currentTime - labelStartTime;
 
     if (elapsedTime >= switchDuration) {
-      // Switch label every 5 seconds
+      Serial.print("Start ");
+      Serial.print(currentLabel);
+      Serial.println(" in: ");
+      Serial.println("5");
+      delay(1000);
+      Serial.println("4");
+      delay(1000);
+      Serial.println("3");
+      delay(1000);
+      Serial.println("2");
+      delay(1000);
+      Serial.println("1");
+      delay(1000);
+      // Switch label every 2 seconds
+      currentTime = millis();
       labelStartTime = currentTime;
       if (currentLabel == "flexion") {
-        Serial.println("Start flexion in:");
-        Serial.println("5");
-        delay(1000);
-        Serial.println("4");
-        delay(1000);
-        Serial.println("3");
-        delay(1000);
-        Serial.println("2");
-        delay(1000);
-        Serial.println("1");
-        delay(1000);
-        // Include some sort of count down from 5 before start of flexion/extension so that data collection is more precise
-        // Serial.print("Begin extension in 5 seconds");
-        // delay(5000);
         currentLabel = "extension";
-      } else {
-        Serial.println("Start extension in:");
-        Serial.println("5");
-        delay(1000);
-        Serial.println("4");
-        delay(1000);
-        Serial.println("3");
-        delay(1000);
-        Serial.println("2");
-        delay(1000);
-        Serial.println("1");
-        delay(1000);
-        // Serial.print("Begin flexion in 5 seconds");
-        // delay(5000);
+      } 
+      else {
         labelStartTime = millis();
         currentLabel = "flexion";
       }
@@ -604,11 +592,11 @@ void loop() {
         emgIndex++; // Increment the index
     }
 
-    Serial.println(currentLabel);
     Serial.print(biRMS);
     Serial.print(",");
     Serial.print(triRMS);
     Serial.print(",");
+    Serial.println(currentLabel);
 
     unsigned long time = millis();
     unsigned long elapsedtime = time - StartTime;
