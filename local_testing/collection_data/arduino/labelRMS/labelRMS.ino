@@ -236,49 +236,7 @@ aimodel_t model_training(EMGData data[32], unsigned int number_data_points) {
       input_data[i * 2] = biArray[i];
       input_data[i * 2 + 1] = triArray[i];
   }
-
-  // Now you can use input_data for model training
-  // For example:
-  // for (int i = 0; i < number_data_points * 2; ++i) {
-  //     Serial.println(input_data[i]);
-  // }
-  //////////////////////////////////////////////////////////////////////
-
-  // float input_data[number_data_points*2] = {
-  //   33.05f,32.89f,
-  //   87.00f,77.51f,
-  //   94.27f,81.90f,
-  //   96.67f,78.30f,
-  //   78.28f,61.53f,
-  //   95.32f,76.87f,
-  //   78.22f,53.66f,
-  //   92.20f,75.80f,
-  //   15.47f,21.14f,
-  //   53.86f,57.77f,
-  //   70.11f,75.33f,
-  //   66.01f,75.66f,
-  //   33.61f,48.81f,
-  //   82.46f,85.92f,
-  //   49.10f,62.33f,
-  //   42.28f,48.70f,
-  //   33.05f,32.89f,
-  //   87.00f,77.51f,
-  //   94.27f,81.90f,
-  //   96.67f,78.30f,
-  //   78.28f,61.53f,
-  //   95.32f,76.87f,
-  //   78.22f,53.66f,
-  //   92.20f,75.80f,
-  //   15.47f,21.14f,
-  //   53.86f,57.77f,
-  //   70.11f,75.33f,
-  //   66.01f,75.66f,
-  //   33.61f,48.81f,
-  //   82.46f,85.92f,
-  //   49.10f,62.33f,
-  //   42.28f,48.70f
-  // };
-
+  
   aitensor_t input_tensor = AITENSOR_2D_F32(input_shape, input_data);       // Creation of the input AIfES tensor with two dimensions and data type F32 (float32)
   // Tensor for the target data
   uint16_t target_shape[] = {number_data_points, 1};     // Definition of the input shape
@@ -291,47 +249,6 @@ aimodel_t model_training(EMGData data[32], unsigned int number_data_points) {
       target_data[i] = num_labelArray[i];
   }
 
-  // Now you can use input_data for model training
-  // For example:
-  // for (int i = 0; i < number_data_points; ++i) {
-  //     Serial.println(target_data[i]);
-  // }
-  //////////////////////////////////////////////////////////////////////
-
-  // float target_data[number_data_points*1] = {
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f
-  // };
   aitensor_t target_tensor = AITENSOR_2D_F32(target_shape, target_data); // Assign the target_data array to the tensor. It expects a pointer to the array where the data is stored
   // Empty tensor for the output data (result after training). 
   // Same configuration as for the target tensor
@@ -510,10 +427,12 @@ aimodel_t model_training(EMGData data[32], unsigned int number_data_points) {
     //Serial.println(((float* ) output_tensor.data)[i]); //Alternative print for the tensor
   }
 
+
   float accuracy = (float)correct_predictions / total_predictions * 100;
   Serial.print("Accuracy: ");
   Serial.print(accuracy);
   Serial.println("%");
+
   
   free(parameter_memory);
   free(memory_ptr);
@@ -550,7 +469,6 @@ float make_predictions(EMGData_for_predictions data[32], unsigned int number_dat
   float input_data[number_data_points*2];
   uint16_t input_shape[] = {number_data_points, 2}; 
 
-
   // Populate input_data array with biArray and triArray values
   for (int i = 0; i < number_data_points; ++i) {
       input_data[i * 2] = biArray[i];
@@ -578,6 +496,7 @@ float make_predictions(EMGData_for_predictions data[32], unsigned int number_dat
   aitensor_t output_tensor = AITENSOR_2D_F32(output_shape, output_data);
 
   Serial.print("test2");
+  aialgo_compile_model(&trained_model); // Compile the AIfES model
   aialgo_inference_model(&trained_model, &input_tensor, &output_tensor);
   Serial.print("test3");
   
@@ -599,115 +518,7 @@ float make_predictions(EMGData_for_predictions data[32], unsigned int number_dat
     Serial.println(output_data[i]);
     //Serial.println(((float* ) output_tensor.data)[i]); //Alternative print for the tensor
   }
-}
 
-void temp() {
-
-  while(Serial.available() > 0 ){
-    String str = Serial.readString();
-    if(str.indexOf("inference") > -1){        // Keyword "inference"
-      Serial.println(F("AIfES"));
-      Serial.println();
-      
-      //Tensor for the input data
-      float input_data[] = {0.0f, 1.0f};                                        // Input data for the XOR ANN (0.0 / 1.0) 
-      uint16_t input_shape[] = {1, 2};                                          // Definition of the input shape
-      aitensor_t input_tensor = AITENSOR_2D_F32(input_shape, input_data);       // Creation of the input AIfES tensor with two dimensions and data type F32 (float32)
-
-      // ---------------------------------- Layer definition ---------------------------------------
-    
-      // Input layer
-      uint16_t input_layer_shape[] = {1, 2};      // Definition of the input layer shape (Must fit to the input tensor. The first dimension is the batch size.)
-      ailayer_input_f32_t input_layer = AILAYER_INPUT_F32_M( /*input dimension=*/ 2, /*input shape=*/ input_layer_shape);   // Creation of the AIfES input layer
-
-      // Hidden dense layer
-      float weights_data_dense_1[] = {-10.1164f, -8.4212f, 5.4396f, 7.297f, -7.6482f, -9.0155f};  // Hidden layer weights 
-      float bias_data_dense_1[] = {-2.9653f,  2.3677f, -1.5968f};                                 // Hidden layer bias weights 
-      ailayer_dense_f32_t dense_layer_1 = AILAYER_DENSE_F32_M( /*neurons=*/ 3, /*weights=*/ weights_data_dense_1, /*bias=*/ bias_data_dense_1); // Creation of the AIfES hidden dense layer with 3 neurons
-
-      // Hidden layer activation function
-      ailayer_sigmoid_f32_t sigmoid_layer_1 = AILAYER_SIGMOID_F32_M();
-    
-      // Output dense layer
-      float weights_data_dense_2[] = {12.0305f, -6.5858f, 11.9371f};  // Output dense layer weights
-      float bias_data_dense_2[] = {-5.4247f};                         //Output dense layer bias weights
-      ailayer_dense_f32_t dense_layer_2 = AILAYER_DENSE_F32_M( /*neurons=*/ 1, /*weights=*/ weights_data_dense_2, /*bias=*/ bias_data_dense_2); // Creation of the AIfES output dense layer with 1 neuron
-      
-      // Output layer activation function
-      ailayer_sigmoid_f32_t sigmoid_layer_2 = AILAYER_SIGMOID_F32_M();
-    
-      // --------------------------- Define the structure of the model ----------------------------
-    
-      aimodel_t model;  // AIfES model
-      ailayer_t *x;     // Layer object from AIfES to connect the layers
-
-      // Connect the layers to an AIfES model
-      model.input_layer = ailayer_input_f32_default(&input_layer);
-      x = ailayer_dense_f32_default(&dense_layer_1, model.input_layer);
-      x = ailayer_sigmoid_f32_default(&sigmoid_layer_1, x);
-      x = ailayer_dense_f32_default(&dense_layer_2, x);
-      model.output_layer = ailayer_sigmoid_f32_default(&sigmoid_layer_2, x);
-    
-      aialgo_compile_model(&model); // Compile the AIfES model
-      
-      // ------------------------------------- Print the model structure ------------------------------------
-      
-      Serial.println(F("-------------- Model structure ---------------"));
-      aialgo_print_model_structure(&model);
-      Serial.println(F("----------------------------------------------\n"));
-    
-      // -------------------------------- Allocate and schedule the working memory for inference ---------
-    
-      // Allocate memory for result and temporal data
-      uint32_t memory_size = aialgo_sizeof_inference_memory(&model);
-      Serial.print(F("Required memory for intermediate results: "));
-      Serial.print(memory_size);
-      Serial.print(F(" bytes"));
-      Serial.println();
-      byte *memory_ptr = (byte *) malloc(memory_size);
-      // Here is an alternative if no "malloc" should be used
-      // Do not forget to comment out the "free(memory_ptr);" at the end if you use this solution
-      // byte memory_ptr[memory_size];
-    
-      // Schedule the memory over the model
-      aialgo_schedule_inference_memory(&model, memory_ptr, memory_size);
-    
-      // ------------------------------------- Run the inference ------------------------------------
-
-      // Create an empty output tensor for the inference result
-      uint16_t output_shape[2] = {1, 1};
-      float output_data[1*1];                 // Empty data array of size output_shape
-      aitensor_t output_tensor = AITENSOR_2D_F32(output_shape, output_data);
-      
-      aialgo_inference_model(&model, &input_tensor, &output_tensor); // Inference / forward pass
-    
-      // ------------------------------------- Print result ------------------------------------
-
-      Serial.println(F(""));
-      Serial.println(F("Results:"));
-      Serial.println(F("input 1:\tinput 2:\treal output:\tcalculated output:"));
-      Serial.print (input_data[0]);
-      Serial.print (F("\t\t"));
-      Serial.print (input_data[1]);
-      Serial.print (F("\t\t"));
-      Serial.print (F("1.0"));
-      Serial.print (F("\t\t"));
-      Serial.println(((float* ) output_tensor.data)[0]);
-    
-      // How to print the weights example
-      // Serial.println(F("Dense 1 - Weights:")));
-      // print_aitensor(&dense_layer_1.weights);
-      // Serial.println(F("Dense 1 - Bias:"));
-      // print_aitensor(&dense_layer_1.bias);
-
-      free(memory_ptr);
-
-      Serial.println(F(""));
-      Serial.println(F("Type >inference< to restart"));
-    } else {
-      Serial.println(F("unknown"));
-    }
-  }
 }
 
 void loop() {
@@ -812,14 +623,15 @@ void loop() {
         // delay(5000);
         time = millis();
         StartTime = time;
-        //float accuracy = model_training(emg_trainingData, num_data_points); 
+        model_training(emg_trainingData, num_data_points); 
+        // float accuracy = model_training(emg_trainingData, num_data_points); 
         // ModelResult training_result = model_training(emg_trainingData, num_data_points);
-        aimodel_t trained_model = model_training(emg_trainingData, num_data_points);
+        //aimodel_t trained_model = model_training(emg_trainingData, num_data_points);
         // float accuracy = training_result.accuracy;
 
         // aimodel_t trained_model = training_result.trained_model;
 
-        make_predictions(emg_predictingData, num_data_points, trained_model);
+        // make_predictions(emg_predictingData, num_data_points, trained_model);
         
         // if model accuracy is above 85%, reak out of loop and continue to actuation of servo:
         // if (accuracy > 40) { // change to 85 later
