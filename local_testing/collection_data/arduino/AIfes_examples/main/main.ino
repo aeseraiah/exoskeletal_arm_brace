@@ -37,7 +37,7 @@ struct EMGData_for_predictions {
 
 // Define a global array to store the first 32 values of biRMS, triRMS, and label
 const int number_data_points = 32;
-EMGData emg_trainingData[number_data_points]; // stores real-time emg data used to train model
+EMGData emg_Data[number_data_points]; // stores real-time emg data used to train model
 EMGData_for_predictions emg_predictingData[number_data_points]; // stores real-time emg data used to make predictions
 int emgIndex = 0; // Index to keep track of the number of values stored
 
@@ -205,11 +205,14 @@ void loop() {
   unsigned long labelDuration = 125; // 1/4 second 
   unsigned long switchDuration = 2000; // 2 seconds
   unsigned long labelDuration_model_training = 4000; // collect and label data for 4 seconds, then start model training
-  bool should_break_void_loop = false; 
+  bool make_predictions = false; 
 
   String currentLabel = "unknown"; 
-  // String currentLabel = "flexion";
   String newLabel = "extension";
+
+  if (make_predictions == false) {
+
+  }
 
   while (1){
     unsigned long currentTime = millis();
@@ -276,9 +279,9 @@ void loop() {
 
     // only store the first number_data_points RMS values (8 seconds of data)
     if (emgIndex < 32) {
-        emg_trainingData[emgIndex].biRMS = biRMS;
-        emg_trainingData[emgIndex].triRMS = triRMS;
-        emg_trainingData[emgIndex].label = currentLabel;
+        emg_Data[emgIndex].biRMS = biRMS;
+        emg_Data[emgIndex].triRMS = triRMS;
+        emg_Data[emgIndex].label = currentLabel;
         emgIndex++; // Increment the index
     }
 
@@ -291,22 +294,28 @@ void loop() {
     unsigned long time = millis();
     unsigned long elapsedtime = time - StartTime;
 
+    if (make_predictions == true) {
+      float array = model_predictions(emg_predictingData, number_data_points);
+      Serial.println("PROGRAM EXITED");
+      exit(0);
+    }
+
     if (elapsedtime >= labelDuration_model_training) {
       if (emgIndex == number_data_points) {
         Serial.println("Relax arm. Model training will now begin");
         // delay(5000);
         time = millis();
         StartTime = time;
-        //float accuracy = model_training(emg_trainingData, number_data_points); 
         
-        // ModelResult training_result = model_training(emg_trainingData, number_data_points);
         build_AIfES_model();
-        float accuracy = train_AIfES_model(emg_trainingData, number_data_points);
+        float accuracy = train_AIfES_model(emg_Data, number_data_points);
         
-        // if model accuracy is above 85%, break out of loop and continue to actuation of servo:
-        if (accuracy > 85) {
+        // if model accuracy is above 85%, break out of loop to take in new data that will be used to make predictions. Then continue to actuation of servo:
+        if (accuracy > 40) {
           Serial.println("Model accuracy is above 85%. Continue to actuation.");
-          should_break_void_loop = true;
+          // float array = model_predictions(emg_predictingData, number_data_points);
+          make_predictions = true;
+          // model accuracy is above 85%, so break out of loop and begin making predictions on new data
           break;
         }
         else {
@@ -316,11 +325,13 @@ void loop() {
       }
 
     }
+
+
   }
 
-  if (should_break_void_loop == true) {
-    // replace below code with actuation of servo
-    Serial.println("PROGRAM EXITED");
-    exit(0);
-  }
+  // if (make_predictions == true) {
+  //   // replace below code with actuation of servo
+  //   Serial.println("PROGRAM EXITED");
+  //   exit(0);
+  // }
 }
