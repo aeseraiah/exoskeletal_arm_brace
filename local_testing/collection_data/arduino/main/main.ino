@@ -23,6 +23,7 @@ int sampleRate = SAMPLE_FREQ_500HZ;
 // other inputs will bypass all the EMG_FILTER
 int humFreq = NOTCH_FREQ_60HZ;
 unsigned long timeBudget;
+bool make_predictions;
 
 struct EMGData {
   double biRMS;
@@ -181,40 +182,45 @@ void actuateServo(){
 
 // put your main code here, to run repeatedly:
 void loop() {
-  Serial.println("Training will begin with flexion. A countdown will be given shortly");
-  delay(3000);
   double biRMS, triRMS;
   // unsigned int biThresh, triThresh;
   // confirmSensors(biThresh, triThresh);
-  bool make_predictions = false;
 
-  Serial.println("Start flexion in: ");
-  Serial.println("5");
-  delay(1000);
-  Serial.println("4");
-  delay(1000);
-  Serial.println("3");
-  delay(1000);
-  Serial.println("2");
-  delay(1000);
-  Serial.println("1");
-  delay(1000);
-
-  // continue labeling and retraining unless make_predictions is true (model is above 85%)
+  // continue labeling and retraining unless make_predictions is true (make_predictions = true if model is above 85%)
   if (make_predictions == true) {
+    Serial.print("TEST");
+    // collect data just before making predictions:
+    calculateRMS();
+    Serial.print(biRMS);
+    Serial.print(",");
+    Serial.print(triRMS);
     float array = model_predictions(emg_Data, number_data_points);
     Serial.println("PROGRAM EXITED");
     exit(0);
   }
 
   else {
-    labelData();
+    Serial.println("Training will begin with flexion. A countdown will be given shortly");
+    delay(3000);
+    Serial.println("Start flexion in: ");
+    Serial.println("5");
+    delay(1000);
+    Serial.println("4");
+    delay(1000);
+    Serial.println("3");
+    delay(1000);
+    Serial.println("2");
+    delay(1000);
+    Serial.println("1");
+    delay(1000);
+
+    labelData(); // labels data and calculates RMS
     Serial.println("Relax arm. Model training will now begin");
 
     build_AIfES_model();
     float accuracy = train_AIfES_model(emg_Data, number_data_points);
     // if model accuracy is above 85%, break out of loop to take in new data that will be used to make predictions. Then continue to actuation of servo:
-    if (accuracy > 85) {
+    if (accuracy > 40) {
       Serial.println("Model accuracy is above 85%. Continue to actuation.");
       // float array = model_predictions(emg_predictingData, number_data_points);
       make_predictions = true;
@@ -225,16 +231,9 @@ void loop() {
     else {
       // modify this else statement to go back to section of code that collects data and retrain model with new data 
       Serial.println("Model is below 85% accuracy. It should be retrained with new data");
+      make_predictions = false;
       // break;
     }
 
   }
-
-  // }
-
-  // if (make_predictions == true) {
-  //   // replace below code with actuation of servo
-  //   Serial.println("PROGRAM EXITED");
-  //   exit(0);
-  // }
 }

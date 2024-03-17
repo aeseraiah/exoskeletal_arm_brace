@@ -2,7 +2,7 @@
 // Data is labeled for 8 seconds, with flexion and extension switching every 2 seconds 
 // User is provided countdown for more accurate labeling. Countdown should be moved to OLED display.
 
-void labelData() {
+int labelData() {
   double biRMS, triRMS;
   // unsigned int biThresh, triThresh;
   // confirmSensors(biThresh, triThresh);
@@ -27,14 +27,12 @@ void labelData() {
     unsigned long currentTime = millis();
     unsigned long elapsedTime = currentTime - labelStartTime;
     
-
     if (currentLabel == "flexion") {
       newLabel = "extension";
     }
     if (currentLabel == "extension") {
       newLabel = "flexion";
     }
-
 
     if (elapsedTime >= switchDuration) {
       Serial.print("Start ");
@@ -75,22 +73,14 @@ void labelData() {
       delayMicroseconds(timeBudget - (end-start));
     }
     time = micros() - initial;
-
-    // TESTING SAMPLING RATE:
-    // Serial.println(time);
-    // Serial.print(F("current sampling rate in Hz: "));
-    // Serial.println(double(samples*1000000)/double(time));
     
     biRMS = sqrt(bisumOfSquares / samples);
     triRMS = sqrt(trisumOfSquares / samples);
 
     // only store the first number_data_points RMS values (8 seconds of data)
-    if (emgIndex < 32) {
-        emg_Data[emgIndex].biRMS = biRMS;
-        emg_Data[emgIndex].triRMS = triRMS;
-        emg_Data[emgIndex].label = currentLabel;
-        emgIndex++; // Increment the index
-    }
+    emg_Data[emgIndex].biRMS = biRMS;
+    emg_Data[emgIndex].triRMS = triRMS;
+    emgIndex++; // Increment the index
 
     Serial.print(biRMS);
     Serial.print(",");
@@ -99,5 +89,7 @@ void labelData() {
     Serial.println(currentLabel);
 
   }
+
+  return;
 
 }
