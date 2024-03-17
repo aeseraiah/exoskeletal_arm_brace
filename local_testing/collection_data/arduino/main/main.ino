@@ -169,7 +169,17 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
   }
 }
 
-void actuateServo(){
+void actuateServo(String& movement){
+  String flexion;
+  String extension;
+
+  if (movement == flexion) {
+    // myservo.write(180);
+  }
+
+  else {
+    // myservo.write(0);
+  }
   
 }
 //1. get thresholds for both tricep and bicep
@@ -182,19 +192,15 @@ void actuateServo(){
 
 // put your main code here, to run repeatedly:
 void loop() {
-  double biRMS, triRMS;
   // unsigned int biThresh, triThresh;
   // confirmSensors(biThresh, triThresh);
 
   // continue labeling and retraining unless make_predictions is true (make_predictions = true if model is above 85%)
   if (make_predictions == true) {
-    Serial.print("TEST");
-    // collect data just before making predictions:
-    calculateRMS();
-    Serial.print(biRMS);
-    Serial.print(",");
-    Serial.print(triRMS);
-    float array = model_predictions(emg_Data, number_data_points);
+    double biRMS, triRMS;
+    // collect data and calculate RMS just before making predictions:
+    calculateRMS(biRMS, triRMS);
+    float array = model_predictions(biRMS, triRMS);
     Serial.println("PROGRAM EXITED");
     exit(0);
   }
@@ -214,25 +220,21 @@ void loop() {
     Serial.println("1");
     delay(1000);
 
-    labelData(); // labels data and calculates RMS
+    labelData(); // labels and collects 8 seconds of data, then calculates RMS
     Serial.println("Relax arm. Model training will now begin");
 
     build_AIfES_model();
     float accuracy = train_AIfES_model(emg_Data, number_data_points);
     // if model accuracy is above 85%, break out of loop to take in new data that will be used to make predictions. Then continue to actuation of servo:
     if (accuracy > 40) {
-      Serial.println("Model accuracy is above 85%. Continue to actuation.");
-      // float array = model_predictions(emg_predictingData, number_data_points);
+      Serial.println("Model accuracy is above 85%. Predictions will now be made on new data.");
       make_predictions = true;
-      // model accuracy is above 85%, so break out of loop and begin making predictions on new data
-      // break;
     }
 
     else {
       // modify this else statement to go back to section of code that collects data and retrain model with new data 
       Serial.println("Model is below 85% accuracy. It should be retrained with new data");
       make_predictions = false;
-      // break;
     }
 
   }
