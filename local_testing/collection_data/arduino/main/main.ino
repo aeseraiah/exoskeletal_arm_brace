@@ -7,8 +7,8 @@
 #include "EMGFilters.h"
 #include <aifes.h> 
 
-#define BiSensorInputPin A0   // bicep input pin number
-#define TriSensorInputPin A1  // tricep input pin number
+#define BiSensorInputPin A8  // bicep input pin number
+#define TriSensorInputPin A9  // tricep input pin number
 
 EMGFilters myFilter1;
 EMGFilters myFilter2;
@@ -199,10 +199,13 @@ void loop() {
   if (make_predictions == true) {
     double biRMS, triRMS;
     // collect data and calculate RMS just before making predictions:
-    calculateRMS(biRMS, triRMS);
-    float array = model_predictions(biRMS, triRMS);
-    Serial.println("PROGRAM EXITED");
-    exit(0);
+    while(1) {
+      calculateRMS(biRMS, triRMS);
+      float array = model_predictions(biRMS, triRMS);
+      Serial.println("PROGRAM EXITED");
+      // exit(0);
+    }
+    
   }
 
   else {
