@@ -80,6 +80,7 @@ int labelData() {
     // only store the first number_data_points RMS values (8 seconds of data)
     emg_Data[emgIndex].biRMS = biRMS;
     emg_Data[emgIndex].triRMS = triRMS;
+    emg_Data[emgIndex].label = currentLabel;
     emgIndex++; // Increment the index
 
     Serial.print(biRMS);

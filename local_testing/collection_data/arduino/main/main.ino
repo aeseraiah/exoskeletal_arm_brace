@@ -37,9 +37,9 @@ struct EMGData_for_predictions {
 };
 
 // Define a global array to store the first 32 values of biRMS, triRMS, and label
-const int number_data_points = 32;
-EMGData emg_Data[number_data_points]; // stores real-time emg data used to train model
-EMGData_for_predictions emg_predictingData[number_data_points]; // stores real-time emg data used to make predictions
+// const int number_data_points = 32;
+EMGData emg_Data[32]; // stores real-time emg data used to train model
+EMGData_for_predictions emg_predictingData[32]; // stores real-time emg data used to make predictions
 
 
 // Calibration:
@@ -227,7 +227,8 @@ void loop() {
     Serial.println("Relax arm. Model training will now begin");
 
     build_AIfES_model();
-    float accuracy = train_AIfES_model(emg_Data, number_data_points);
+    // float accuracy = train_AIfES_model(emg_Data, number_data_points);
+    float accuracy = train_AIfES_model(emg_Data);
     // if model accuracy is above 85%, break out of loop to take in new data that will be used to make predictions. Then continue to actuation of servo:
     if (accuracy > 40) {
       Serial.println("Model accuracy is above 85%. Predictions will now be made on new data.");

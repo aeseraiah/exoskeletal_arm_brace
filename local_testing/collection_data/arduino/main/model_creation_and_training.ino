@@ -5,36 +5,20 @@ void *parameter_memory = NULL;                      // Pointer to the memory sta
 
 const int num_classes = 2;
 
-uint16_t input_layer_shape[] = {1, num_classes};              // 3 Inputs RGB, Definition of the shape of the input. Each training data set contains 3 different values (RGB). Therefore, the input shape is (1,3)
-ailayer_input_t input_layer;                        // Definition of the AIfES input layer
+uint16_t input_shape[] = {1, num_classes};   
 
-ailayer_dense_t hidden_layer_1;                     // Definition of the dense hidden layer
-ailayer_sigmoid_t sigmoid_layer_1;        // Definition of the hidden layer activation function (sigmoid)
+ailayer_input_f32_t   input_layer     = AILAYER_INPUT_F32_A( /*input dimension=*/ 2, /*input shape=*/ input_shape); 
+ailayer_dense_f32_t   dense_layer_1   = AILAYER_DENSE_F32_A( /*neurons=*/ 40); 
 
-ailayer_dense_t output_layer;                       // Definition of the output layer
+ailayer_sigmoid_f32_t sigmoid_layer_1 = AILAYER_SIGMOID_F32_A(); 
 
-#ifdef USE_SOFTMAX
-  // This part is for the softmax activation function on the output layer and the cross-entropy loss function
-  ailayer_softmax_t output_layer_activation_softmax;  // Definition of the hidden layer activation function (softmax)
-  ailoss_crossentropy_t crossentropy_loss;            // Loss: cross-entropy / for softmax output activation function
-#else
-  // This part is for the sigmoid activation function on the output layer and the mean squared error loss function
-  ailayer_sigmoid_t output_layer_activation;          // alternative Definition of the hidden layer activation function (sigmoid)
-  //ailoss_mse_t mse_loss;                              // Loss: mean square error / for sigmoid output activation function
-  ailoss_crossentropy_t crossentropy_loss;
-#endif
+// This part is for the sigmoid activation function on the output layer and the mean squared error loss function
+ailayer_sigmoid_f32_t sigmoid_layer_2 = AILAYER_SIGMOID_F32_A();                             // Loss: mean square error / for sigmoid output activation function
+ailoss_crossentropy_t crossentropy_loss;
+
+ailayer_dense_f32_t   dense_layer_2   = AILAYER_DENSE_F32_A( /*neurons=*/ 1);
 
 void build_AIfES_model() {
-  // The model is being build in this function. First of all, the layers (input, hidden and output layer) need to be initialized.
-  // Then the storage for the parameters of the network is reserved and distributed to the layers.
-
-  // ---------------------------------- Layer definition ---------------------------------------
-  input_layer.input_dim = 2;                        // Definition of the input dimension, here a 2 dimensional input layer is selected
-  input_layer.input_shape = input_layer_shape;      // Definition of the input shape, here a (1,2) layout is necessary, because each sample consists of 3 RGB values
-
-  hidden_layer_1.neurons = 40;                       // Number of neurons in the dense hidden layer, here: 6 neurons
-
-  output_layer.neurons = 1;                         // Number of neurons in the output layer, here: 3 neurons, for each object one
 
   // --------------------------- Define the structure of the model ----------------------------
   // Here the order of the layers is defined.
@@ -43,44 +27,28 @@ void build_AIfES_model() {
 
   // Then the dense hidden layer is added, it needs the corresponding layer (i.e. &sigmoid_layer_1) and the previous layer (here model.input_layer).
   // It returns the successfully initialized layer structure.
-  x = ailayer_dense_f32_default(&hidden_layer_1, model.input_layer);
+  x = ailayer_dense_f32_default(&dense_layer_1, model.input_layer);
   // Then the activation function of the hidden layer is added to the model.
   // It is implemented as an additional layer, it needs the corresponding layer (i.e. &sigmoid_layer_1) and the previous layer (here x, i.e. sigmoid_layer_1)
   x = ailayer_sigmoid_f32_default(&sigmoid_layer_1, x);
 
   // Finally, the output layer needs to be added to the model
   // It follow the same semantics as the other layers
-  x = ailayer_dense_f32_default(&output_layer, x);
+  x = ailayer_dense_f32_default(&dense_layer_2, x);
 
-  //The loss is selected depending on the activation function of the output layer
-  #ifdef USE_SOFTMAX
-    // When the softmax activation function is chosen, then the loss for the training of the model is the cross-entropy loss
-  
-    // Add the softmax activation function to the output layer
-    // It is implemented as an additional layer, it needs the corresponding layer (i.e. &output_layer_activation_softmax) and the previous layer (here x, i.e. output_layer)
-    x = ailayer_softmax_f32_default(&output_layer_activation_softmax, x);
-  
-    // Assign the output layer to the model, and therefore also the previous layers (i.e. hidden layer)
-    model.output_layer = x;
-  
-    // Define the loss function for the training of the ANN
-    // It needs the loss model (i.e. &crossentropy_loss) and the output layer of the model (i.e. model.output_layer)
-    model.loss = ailoss_crossentropy_f32_default(&crossentropy_loss, model.output_layer);
-  #else
-    // When the softmax activation function is not chosen, then the sigmoid activation function is used. The loss is the mean square error
-  
-    // Add the sigmoid activation function to the output layer
-    // It is implemented as an additional layer, it needs the corresponding layer (i.e. &output_layer_activation) and the previous layer (here x, i.e. output_layer)
-    x = ailayer_sigmoid_f32_default(&output_layer_activation, x);
-  
-    // Assign the output layer to the model, and therefore also the previous layers (i.e. hidden layer)
-    model.output_layer = x;
-  
-    // Define the loss function for the training of the ANN
-    // It needs the loss model (i.e. &mse_loss) and the output layer of the model (i.e. model.output_layer)
-    // model.loss = ailoss_mse_f32_default(&mse_loss, model.output_layer);
-    model.loss = ailoss_crossentropy_f32_default(&crossentropy_loss, model.output_layer);
-  #endif
+  // When the softmax activation function is not chosen, then the sigmoid activation function is used. The loss is the mean square error
+
+  // Add the sigmoid activation function to the output layer
+  // It is implemented as an additional layer, it needs the corresponding layer (i.e. &sigmoid_layer_2) and the previous layer (here x, i.e. output_layer)
+  x = ailayer_sigmoid_f32_default(&sigmoid_layer_2, x);
+
+  // Assign the output layer to the model, and therefore also the previous layers (i.e. hidden layer)
+  model.output_layer = x;
+
+  // Define the loss function for the training of the ANN
+  // It needs the loss model (i.e. &mse_loss) and the output layer of the model (i.e. model.output_layer)
+  // model.loss = ailoss_mse_f32_default(&mse_loss, model.output_layer);
+  model.loss = ailoss_crossentropy_f32_default(&crossentropy_loss, model.output_layer);
 
   // Generating the model with the specified structure of the layers
   // Counts the number of layers and trainable parameters in a model as preparation for inference or training.
@@ -111,7 +79,9 @@ void build_AIfES_model() {
 }
 
 
-float train_AIfES_model(EMGData data[32], unsigned int number_data_points) {
+// float train_AIfES_model(EMGData data[32], unsigned int number_data_points) {
+float train_AIfES_model(EMGData data[32]) {
+  const int number_data_points = 32;
   // In this function the model is trained with the captured training data
 
   while (!Serial);
@@ -134,13 +104,15 @@ float train_AIfES_model(EMGData data[32], unsigned int number_data_points) {
   }
 
   for (int i = 0; i < number_data_points; ++i) {
+    Serial.println(labelArray[i]);
     if (labelArray[i] == "flexion") {
       num_labelArray[i] = 1.0f;
+      // Serial.println(num_labelArray[i]);
     }
     else { 
       num_labelArray[i] = 0.0f;
+      // Serial.println(num_labelArray[i]);
     }
-    //Serial.println(num_labelArray[i]);
   }
 
   // -------------------------------- Create tensors needed for training ---------------------
@@ -191,13 +163,9 @@ float train_AIfES_model(EMGData data[32], unsigned int number_data_points) {
   //   49.10f,62.33f,
   //   42.28f,48.70f
   // };
- 
-  aitensor_t input_tensor;                                  // Creation of the input AIfES tensor
-  input_tensor.dtype = aif32;                               // Definition of the used data type, here float with 32 bits, different ones are available
-  input_tensor.dim = 2;                                     // Dimensions of the tensor, here 2 dimensions, as specified at input_shape
-  input_tensor.shape = input_shape;                         // Set the shape of the input_tensor
-  input_tensor.data = input_data;                        // Assign the training_data array to the tensor. It expects a pointer to the array where the data is stored
 
+  aitensor_t input_tensor = AITENSOR_2D_F32(input_shape, input_data); 
+ 
   // Create the target tensor for training, contains the desired output for the corresponding sample to train the ANN
   uint16_t target_shape[] = {number_data_points, 1};            // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 possible output classes)}
 
@@ -245,44 +213,24 @@ float train_AIfES_model(EMGData data[32], unsigned int number_data_points) {
   //   1.0f
   // };  
 
-  aitensor_t target_tensor;                                 // Creation of the target AIfES tensor
-  target_tensor.dtype = aif32;                              // Definition of the used data type, here float with 32 bits, different ones are available
-  target_tensor.dim = 2;                                    // Dimensions of the tensor, here 2 dimensions, as specified at target_shape
-  target_tensor.shape = target_shape;                       // Set the shape of the target tensor
-  target_tensor.data = target_data;                              // Assign the labels array to the tensor. It expects a pointer to the array where the data is stored
+  aitensor_t target_tensor = AITENSOR_2D_F32(target_shape, target_data);
 
   // Create an output tensor for training, here the results of the ANN are saved and compared to the target tensor during training
   float output_data[number_data_points*1];                     // Array for storage of the output data
   uint16_t output_shape[] = {number_data_points, 1};            // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 possible output classes)}
-  aitensor_t output_tensor;                                 // Creation of the target AIfES tensor
-  output_tensor.dtype = aif32;                              // Definition of the used data type, here float with 32 bits, different ones are available
-  output_tensor.dim = 1;                                    // Dimensions of the tensor, here 2 dimensions, as specified at output_shape
-  output_tensor.shape = output_shape;                       // Set the shape of the output tensor
-  output_tensor.data = output_data;                         // Assign the output_data array to the tensor. It expects a pointer to the array where the data is stored
+  
+  aitensor_t output_tensor = AITENSOR_2D_F32(output_shape, output_data);
 
   // -------------------------------- Initialize the weights and bias of the layers ---------------------
-  // Here the weights and biases of the hidden and output layer are randomly initialized from a uniform distribution within the given range
-  float from = -2.0;
-  float to = 2.0;
-  aimath_f32_default_tensor_init_uniform(&hidden_layer_1.weights, from, to);
-  aimath_f32_default_tensor_init_uniform(&hidden_layer_1.bias, from, to);
-  aimath_f32_default_tensor_init_uniform(&output_layer.weights, from, to);
-  aimath_f32_default_tensor_init_uniform(&output_layer.bias, from, to);
+  aimath_f32_default_init_glorot_uniform(&dense_layer_1.weights);
+  aimath_f32_default_init_zeros(&dense_layer_1.bias);
+  aimath_f32_default_init_glorot_uniform(&dense_layer_2.weights);
+  aimath_f32_default_init_zeros(&dense_layer_2.bias);
 
   // -------------------------------- Define the optimizer for training ---------------------
   // Definition of the pointer towards the optimizer, which helps to optimize the learning process of the ANN
-  aiopti_t *optimizer;
-
-  // ADAM optimizer
-  aiopti_adam_f32_t adam_opti;                              // Creation of the ADAM optimizer, other optimizers are available
-  // Set parameters of the ADAM optimizer
-  adam_opti.learning_rate = 0.1f;
-  adam_opti.beta1 = 0.9f;
-  adam_opti.beta2 = 0.999f;
-  adam_opti.eps = 1e-7;
-
-  // Create the optimizer with the specified parameters
-  optimizer = aiopti_adam_f32_default(&adam_opti);
+  aiopti_adam_f32_t adam_opti = AIOPTI_ADAM_F32(/*learning rate=*/ 0.001f, /*beta_1=*/ 0.9f, /*beta_2=*/ 0.999f, /*eps=*/ 1e-7);
+  aiopti_t *optimizer = aiopti_adam_f32_default(&adam_opti); // Initialize the optimizer
 
   // -------------------------------- Allocate and schedule the working memory for training ---------
   // Calculate the necessary memory size to store intermediate results, gradients and momentums for training.
@@ -357,9 +305,10 @@ float train_AIfES_model(EMGData data[32], unsigned int number_data_points) {
   float predicted_labels[number_data_points*1];
   int correct_predictions = 0;
   int total_predictions = number_data_points;
+
   
   for (i = 0; i < number_data_points; i++) {
-    Serial.print(input_data[input_counter]);
+    Serial.print(input_data[input_counter]);    
     //Serial.print(((float* ) input_tensor.data)[i]); //Alternative print for the tensor
     input_counter++;
     Serial.print(F("\t\t"));
