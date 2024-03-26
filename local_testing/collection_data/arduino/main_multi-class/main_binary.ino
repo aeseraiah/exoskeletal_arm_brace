@@ -1,13 +1,16 @@
+// https://github.com/Fraunhofer-IMS/AIfES_for_Arduino
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
 #include "WProgram.h"
 #endif
 #include "EMGFilters.h"
+#include <aifes.h> 
+#include <Servo.h>
+Servo myservo;
 
-
-#define BiSensorInputPin A0   // bicep input pin number
-#define TriSensorInputPin A1  // tricep input pin number
+#define BiSensorInputPin A8  // bicep input pin number
+#define TriSensorInputPin A9  // tricep input pin number
 
 EMGFilters myFilter1;
 EMGFilters myFilter2;
@@ -21,8 +24,27 @@ int sampleRate = SAMPLE_FREQ_500HZ;
 // our emg filter only support 50Hz and 60Hz input
 // other inputs will bypass all the EMG_FILTER
 int humFreq = NOTCH_FREQ_60HZ;
-
 unsigned long timeBudget;
+bool make_predictions;
+bool servo_extend;
+
+struct EMGData {
+  double biRMS;
+  double triRMS;
+  String label;
+};
+
+struct EMGData_for_predictions {
+  double biRMS;
+  double triRMS;
+};
+
+// Define a global array to store the first 32 values of biRMS, triRMS, and label
+// const int number_data_points = 32;
+EMGData emg_Data[32]; // stores real-time emg data used to train model
+EMGData_for_predictions emg_predictingData[32]; // stores real-time emg data used to make predictions
+
+
 // Calibration:
 // put on the sensors, and release your muscles;
 // wait a few seconds, and select the max value as the threshold;
@@ -34,12 +56,11 @@ void setup() {
   myFilter1.init(sampleRate, humFreq, true, true, true);
   myFilter2.init(sampleRate, humFreq, true, true, true);
   timeBudget = 1e6/sampleRate;
-  //input pulldown is not declared? Might not exist for this processor
-  //pinMode (BiSensorInputPin, INPUT_PULLDOWN);
-  //pinMode (TriSensorInputPin, INPUT_PULLDOWN);
   // open serial
   Serial.begin(230400);
-  // Serial.begin(250000);
+  srand(analogRead(A5));  
+  myservo.attach(A7);
+
 }
 
 unsigned int readBi() {
@@ -48,7 +69,6 @@ unsigned int readBi() {
     biDataAfterFilter = myFilter1.update(biValue);
     bienvlope = sq(biDataAfterFilter);
     return(bienvlope);
-    // return(biValue);
 }
 
 unsigned int readTri() {
@@ -57,8 +77,8 @@ unsigned int readTri() {
     triDataAfterFilter = myFilter2.update(triValue);
     trienvlope = sq(triDataAfterFilter);
     return(trienvlope);
-    // return(triValue);
 }
+
 void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
   unsigned long start, end;
   while (1){
@@ -150,85 +170,78 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
     }
   }
 }
-void actuateServo(){
+
+void actuateServo(String& movement){
+  String flexion;
+  String extension;
+
+  if (movement == flexion) {
+    // myservo.write(180);
+  }
+
+  else {
+    // myservo.write(0);
+  }
   
 }
 //1. get thresholds for both tricep and bicep
 //LOOP:
 //2. read in 1/4 seconds worth of samples into tribuffer and bibuffer
 //3. get RMS on these buffers
-//4. make activation decision based on RMS (TINY ML)
+//4. make activation decision based on RMS (ML)
 //5. activate servo in based on activation response (keep track of current location and slow the movement as it is close to the endpoints)
 //6. enter loop again
 
-double calculateRMS(unsigned int buffer[], int size) {
-  double sumOfSquares = 0.0;
-  for (int i = 0; i < size; i++) {
-    sumOfSquares += sq(buffer[i]);
-  }
-  return sqrt(sumOfSquares / size);
-}
-
+// put your main code here, to run repeatedly:
 void loop() {
-  // put your main code here, to run repeatedly:
-  double biRMS, triRMS;
-  unsigned int biThresh, triThresh;
-  confirmSensors(biThresh, triThresh);
-  unsigned long start, end, initial;
-  unsigned long time = 0;
-  int samples;
-  unsigned int biBuffer[125];
-  unsigned int triBuffer[125];
-  double bisumOfSquares;
-  double trisumOfSquares;
-  unsigned long labelStartTime = millis(); // initializes the time that labels are defined 
-  unsigned long labelDuration = 125; // 1/4 second 
-  unsigned long switchDuration = 5000; // 5 seconds
-  String currentLabel = "unknown"; 
+  // unsigned int biThresh, triThresh;
+  // confirmSensors(biThresh, triThresh);
 
-  while (1){
-    unsigned long currentTime = millis();
-    unsigned long elapsedTime = currentTime - labelStartTime;
-
-    if (elapsedTime >= switchDuration) {
-      // Switch label every 5 seconds
-      labelStartTime = currentTime;
-      if (currentLabel == "flexion") {
-        currentLabel = "extension";
-      } else {
-        labelStartTime = millis();
-        currentLabel = "flexion";
-      }
+  // continue labeling and retraining unless make_predictions is true (make_predictions = true if model is above 85%)
+  if (make_predictions == true) {
+    double biRMS, triRMS;
+    // collect data and calculate RMS just before making predictions:
+    while(1) {
+      calculateRMS(biRMS, triRMS);
+      float array = model_predictions(biRMS, triRMS);
+      Serial.println("PROGRAM EXITED");
+      // exit(0);
     }
-
-    bisumOfSquares = 0;
-    trisumOfSquares = 0;
-    initial = micros();
-    for (samples = 0; samples<125; samples ++){
-      start = micros();
-      biBuffer[samples] = readBi();
-      triBuffer[samples] = readTri();
-      bisumOfSquares += sq(biBuffer[samples]);
-      trisumOfSquares += sq(triBuffer[samples]);
-      end = micros();
-      delayMicroseconds(timeBudget - (end-start));
-    }
-    time = micros() - initial;
-
-    // TESTING SAMPLING RATE:
-    Serial.println(time);
-    Serial.print(F("current sampling rate in Hz: "));
-    Serial.println(double(samples*1000000)/double(time));
     
-    biRMS = sqrt(bisumOfSquares / samples);
-    triRMS = sqrt(trisumOfSquares / samples);
-    Serial.print(biRMS);
-    Serial.print(",");
-    Serial.println(triRMS);
-    // Serial.print(triRMS);
-    // Serial.print(",");
-    // Serial.println(currentLabel);
   }
-  
-}
 
+  else {
+    Serial.println("Training will begin with flexion. A countdown will be given shortly");
+    delay(3000);
+    Serial.println("Start flexion in: ");
+    Serial.println("5");
+    delay(1000);
+    Serial.println("4");
+    delay(1000);
+    Serial.println("3");
+    delay(1000);
+    Serial.println("2");
+    delay(1000);
+    Serial.println("1");
+    delay(1000);
+
+    labelData(); // labels and collects 8 seconds of data, then calculates RMS
+    Serial.println("Relax arm. Model training will now begin");
+
+    build_AIfES_model();
+    // float accuracy = train_AIfES_model(emg_Data, number_data_points);
+    float accuracy = train_AIfES_model(emg_Data);
+    // if model accuracy is above 85%, break out of loop to take in new data that will be used to make predictions. Then continue to actuation of servo:
+    if (accuracy > 85) {
+      Serial.println("Model accuracy is above 85%. Predictions will now be made on new data.");
+      make_predictions = true;
+    }
+
+    else {
+      // modify this else statement to go back to section of code that collects data and retrain model with new data 
+      Serial.println("Model is below 85% accuracy. It should be retrained with new data");
+      make_predictions = false;
+    }
+
+  }
+}
