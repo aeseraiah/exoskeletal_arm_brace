@@ -6,6 +6,8 @@
 #endif
 #include "EMGFilters.h"
 #include <aifes.h> 
+#include <Servo.h>
+Servo myservo;
 
 #define BiSensorInputPin A8  // bicep input pin number
 #define TriSensorInputPin A9  // tricep input pin number
@@ -56,6 +58,7 @@ void setup() {
   // open serial
   Serial.begin(230400);
   srand(analogRead(A5));  
+  myservo.attach(A7);
 
 }
 

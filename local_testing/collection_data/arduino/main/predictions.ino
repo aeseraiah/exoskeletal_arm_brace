@@ -41,12 +41,16 @@ float model_predictions(double bicep_rms, double tricep_rms) {
     // ACTUATE SERVO:
     // String movement = flexion;
     // actuateServo(movement)
+    myservo.write(130);
+    delay(500);
     predicted_label = 1;
   } 
   else {
     // ACTUATE SERVO:
     // String movement = extension;
     // actuateServo(movement)
+    myservo.write(0);
+    delay(500);
     predicted_label = 0;
   }
   Serial.print(F("\t\t\t"));
