@@ -213,17 +213,17 @@ void loop() {
   else {
     Serial.println("Training will begin with flexion. A countdown will be given shortly");
     delay(3000);
-    Serial.println("Start flexion in: ");
-    Serial.println("5");
-    delay(1000);
-    Serial.println("4");
-    delay(1000);
-    Serial.println("3");
-    delay(1000);
-    Serial.println("2");
-    delay(1000);
-    Serial.println("1");
-    delay(1000);
+    // Serial.println("Start flexion in: ");
+    // Serial.println("5");
+    // delay(1000);
+    // Serial.println("4");
+    // delay(1000);
+    // Serial.println("3");
+    // delay(1000);
+    // Serial.println("2");
+    // delay(1000);
+    // Serial.println("1");
+    // delay(1000);
 
     labelData(); // labels and collects 8 seconds of data, then calculates RMS
     Serial.println("Relax arm. Model training will now begin");

@@ -4,7 +4,7 @@ ailayer_t *x;                                       // Layer object from AIfES, 
 void *parameter_memory = NULL;                      // Pointer to the memory stack of the AIfES model
 
 const int num_features = 2; // binary classification
-const int num_features = 3; // multi-class classification
+const int num_classes = 3; // multi-class classification
 
 uint16_t input_shape[] = {1, num_features};   
 
@@ -48,7 +48,7 @@ void build_AIfES_model() {
   // Add the sigmoid activation function to the output layer
   // It is implemented as an additional layer, it needs the corresponding layer (i.e. &sigmoid_layer_2) and the previous layer (here x, i.e. output_layer)
   // x = ailayer_sigmoid_f32_default(&sigmoid_layer_2, x);
-  x = ailayer_sigmoid_f32_default(&softmax_layer, x);
+  x = ailayer_softmax_f32_default(&softmax_layer, x);
 
   // Assign the output layer to the model, and therefore also the previous layers (i.e. hidden layer)
   model.output_layer = x;
