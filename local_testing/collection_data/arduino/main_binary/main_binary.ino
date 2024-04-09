@@ -43,7 +43,6 @@ struct EMGData_for_predictions {
 EMGData emg_Data[32]; // stores real-time emg data used to train model
 EMGData_for_predictions emg_predictingData[32]; // stores real-time emg data used to make predictions
 
-
 // Calibration:
 // put on the sensors, and release your muscles;
 // wait a few seconds, and select the max value as the threshold;
@@ -172,19 +171,19 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
   }
 }
 
-void actuateServo(String& movement){
-  String flexion;
-  String extension;
+// void actuateServo(String& movement){
+//   String flexion;
+//   String extension;
 
-  if (movement == flexion) {
-    // myservo.write(180);
-  }
+//   if (movement == flexion) {
+//     // myservo.write(180);
+//   }
 
-  else {
-    // myservo.write(0);
-  }
+//   else {
+//     // myservo.write(0);
+//   }
   
-}
+// }
 //1. get thresholds for both tricep and bicep
 //LOOP:
 //2. read in 1/4 seconds worth of samples into tribuffer and bibuffer
@@ -196,7 +195,6 @@ void actuateServo(String& movement){
 // put your main code here, to run repeatedly:
 void loop() {
   // unsigned int biThresh, triThresh;
-  // confirmSensors(biThresh, triThresh);
 
   // continue labeling and retraining unless make_predictions is true (make_predictions = true if model is above 85%)
   if (make_predictions == true) {
@@ -212,6 +210,7 @@ void loop() {
   }
 
   else {
+    confirmSensors(biThresh, triThresh);
     Serial.println("Training will begin with flexion. A countdown will be given shortly");
     delay(3000);
     Serial.println("Start flexion in: ");
