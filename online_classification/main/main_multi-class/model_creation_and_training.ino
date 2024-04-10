@@ -3,27 +3,21 @@ ailayer_t *x;                                       // Layer object from AIfES, 
 
 void *parameter_memory = NULL;                      // Pointer to the memory stack of the AIfES model
 
-const int num_features = 2; // binary classification
-const int num_classes = 3; // multi-class classification
+const int num_classes = 3;
+const int num_features = 2;
 
 uint16_t input_shape[] = {1, num_features};   
 
-ailayer_input_f32_t   input_layer     = AILAYER_INPUT_F32_A( /*input dimension=*/ 2, /*input shape=*/ input_shape); 
+ailayer_input_f32_t   input_layer     = AILAYER_INPUT_F32_A( /*input dimension=*/ num_features, /*input shape=*/ input_shape); 
 ailayer_dense_f32_t   dense_layer_1   = AILAYER_DENSE_F32_A( /*neurons=*/ 40); 
 
 ailayer_sigmoid_f32_t sigmoid_layer_1 = AILAYER_SIGMOID_F32_A(); 
 
-// BINARY CLASSIFICATION:
-// ailayer_dense_f32_t   dense_layer_2   = AILAYER_DENSE_F32_A( /*neurons=*/ 1);
-// ailayer_sigmoid_f32_t sigmoid_layer_2 = AILAYER_SIGMOID_F32_A();                           
-////////////////////////////////////////////////////////////////////////////////////
-
-// MULTI-CLASS CLASSIFICATION:
-ailayer_dense_f32_t dense_layer_2 = AILAYER_DENSE_F32_A( /*neurons=*/ 3); // 3 neurons for 3 classes
-ailayer_softmax_f32_t softmax_layer = AILAYER_SOFTMAX_F32_A(); // Softmax activation for multi-class classification
-////////////////////////////////////////////////////////////////////////////////////
-
+// This part is for the sigmoid activation function on the output layer and the mean squared error loss function
+ailayer_softmax_f32_t softmax_layer_2 = AILAYER_SOFTMAX_F32_A();                             // Loss: mean square error / for sigmoid output activation function
 ailoss_crossentropy_t crossentropy_loss;
+
+ailayer_dense_f32_t   dense_layer_2   = AILAYER_DENSE_F32_A( /*neurons=*/ num_classes);
 
 void build_AIfES_model() {
 
@@ -45,10 +39,9 @@ void build_AIfES_model() {
 
   // When the softmax activation function is not chosen, then the sigmoid activation function is used. The loss is the mean square error
 
-  // Add the sigmoid activation function to the output layer
+  // Add the softmax activation function to the output layer
   // It is implemented as an additional layer, it needs the corresponding layer (i.e. &sigmoid_layer_2) and the previous layer (here x, i.e. output_layer)
-  // x = ailayer_sigmoid_f32_default(&sigmoid_layer_2, x);
-  x = ailayer_softmax_f32_default(&softmax_layer, x);
+  x = ailayer_softmax_f32_default(&softmax_layer_2, x);
 
   // Assign the output layer to the model, and therefore also the previous layers (i.e. hidden layer)
   model.output_layer = x;
@@ -87,9 +80,8 @@ void build_AIfES_model() {
 }
 
 
-// float train_AIfES_model(EMGData data[32], unsigned int number_data_points) {
-float train_AIfES_model(EMGData data[32]) {
-  const int number_data_points = 32;
+// float train_AIfES_model(EMGData data[48], unsigned int number_data_points) {
+float train_AIfES_model(EMGData data[number_data_points]) {
   // In this function the model is trained with the captured training data
 
   while (!Serial);
@@ -102,6 +94,7 @@ float train_AIfES_model(EMGData data[32]) {
   double triArray[number_data_points];
   String labelArray[number_data_points];
   float num_labelArray[number_data_points];
+  const int num_rms_values_per_label = 8; // make this dynamic later
 
   for (int i = 0; i < number_data_points; ++i) {
       // Store the first column values (biRMS) in biArray
@@ -112,24 +105,27 @@ float train_AIfES_model(EMGData data[32]) {
   }
 
   for (int i = 0; i < number_data_points; ++i) {
-    Serial.println(labelArray[i]);
     if (labelArray[i] == "flexion") {
       num_labelArray[i] = 2.0f;
+      // Serial.println(num_labelArray[i]);
     }
-    if (labelArray[i] == "extension") {
+    else if (labelArray[i] == "extension") {
       num_labelArray[i] = 1.0f;
-    }
+      // Serial.println(num_labelArray[i]);
+    } 
+    // rest label:
     else { 
       num_labelArray[i] = 0.0f;
+      // Serial.println(num_labelArray[i]);
     }
   }
 
   // -------------------------------- Create tensors needed for training ---------------------
   // Create the input tensor for training, contains all samples
-  uint16_t input_shape[] = {number_data_points, 2};             // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 RGB values)}
+  uint16_t input_shape[] = {number_data_points, num_features};             // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 RGB values)}
  
 ///////// TRAIN WITH REAL-TIME DATA /////////////////////////
-  float input_data[number_data_points*2];
+  float input_data[number_data_points*num_features];
 
   // Populate input_data array with biArray and triArray values
   for (int i = 0; i < number_data_points; ++i) {
@@ -137,41 +133,7 @@ float train_AIfES_model(EMGData data[32]) {
       input_data[i * 2 + 1] = triArray[i];
   }
 
-///////// TRAIN WITH OFFLINE DATA /////////////////////////
-  // float input_data[number_data_points*2] = {
-  //   33.05f,32.89f,
-  //   87.00f,77.51f,
-  //   94.27f,81.90f,
-  //   96.67f,78.30f,
-  //   78.28f,61.53f,
-  //   95.32f,76.87f,
-  //   78.22f,53.66f,
-  //   92.20f,75.80f,
-  //   15.47f,21.14f,
-  //   53.86f,57.77f,
-  //   70.11f,75.33f,
-  //   66.01f,75.66f,
-  //   33.61f,48.81f,
-  //   82.46f,85.92f,
-  //   49.10f,62.33f,
-  //   42.28f,48.70f,
-  //   33.05f,32.89f,
-  //   87.00f,77.51f,
-  //   94.27f,81.90f,
-  //   96.67f,78.30f,
-  //   78.28f,61.53f,
-  //   95.32f,76.87f,
-  //   78.22f,53.66f,
-  //   92.20f,75.80f,
-  //   15.47f,21.14f,
-  //   53.86f,57.77f,
-  //   70.11f,75.33f,
-  //   66.01f,75.66f,
-  //   33.61f,48.81f,
-  //   82.46f,85.92f,
-  //   49.10f,62.33f,
-  //   42.28f,48.70f
-  // };
+  float target_data[number_data_points][num_classes];
 
   aitensor_t input_tensor = AITENSOR_2D_F32(input_shape, input_data); 
  
@@ -179,53 +141,19 @@ float train_AIfES_model(EMGData data[32]) {
   uint16_t target_shape[] = {number_data_points, num_classes};            // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 possible output classes)}
 
 ////////////////// TRAIN WITH REAL-TIME DATA ////////////////////////
-  float target_data[number_data_points*num_classes];
 
   for (int i = 0; i < number_data_points; ++i) {
-      target_data[i] = num_labelArray[i];
-  }
-
-
-////////////////// TRAIN WITH OFFLINE DATA ////////////////////////
-  // float target_data[number_data_points*1] = {
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f
-  // };  
+    for (int j =0; j < num_rms_values_per_label; j++) {
+      target_data[i][j] = num_labelArray[j];
+    }
+  } 
 
   aitensor_t target_tensor = AITENSOR_2D_F32(target_shape, target_data);
 
+  // Define output_data as a 2D array
+  float output_data[number_data_points][num_classes];
   // Create an output tensor for training, here the results of the ANN are saved and compared to the target tensor during training
-  float output_data[number_data_points*num_classes];                     // Array for storage of the output data
+  // float output_data[number_data_points*1];                     // Array for storage of the output data
   uint16_t output_shape[] = {number_data_points, num_classes};            // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 possible output classes)}
   
   aitensor_t output_tensor = AITENSOR_2D_F32(output_shape, output_data);
@@ -315,35 +243,45 @@ float train_AIfES_model(EMGData data[32]) {
   int correct_predictions = 0;
   int total_predictions = number_data_points;
 
-  
-  for (i = 0; i < number_data_points; i++) {
-    Serial.print(input_data[input_counter]);    
-    //Serial.print(((float* ) input_tensor.data)[i]); //Alternative print for the tensor
-    input_counter++;
-    Serial.print(F("\t\t"));
+  // Loop through each data point
+  for (int j = 0; j < number_data_points; j++) {
+    int predicted_label = -1;  // Initialize predicted label to an invalid value
+    float max_probability = 0.0;  // Initialize maximum probability
+
+    // Loop through each class
+    for (int i = 0; i < num_classes; i++) {
+        // Check if the probability for the current class is higher than the previous maximum
+        if (output_data[j][i] > max_probability) {
+            max_probability = output_data[j][i];
+            predicted_label = i;  // Assign current class as the predicted label
+        }
+    }
+
+    // Compare predicted label with target label
+    if (predicted_label == target_data[i]) {
+        correct_predictions++;  // Increment counter for correct predictions
+    }
+
+    // Print input data
     Serial.print(input_data[input_counter]);
+    Serial.print(F("\t\t"));
     input_counter++;
+    Serial.print(input_data[input_counter]);
     Serial.print(F("\t\t"));
-    Serial.print(target_data[i]);
-    Serial.print(F("\t\t"));
-    Serial.print(output_data[i]);
-    if (output_data[i] > 0.5) {
-      // ACTUATE SERVO:
-      // myservo.write(180);
-      predicted_labels[i] = 1;
-    } 
-    else {
-      // myservo.write(0);
-      predicted_labels[i] = 0;
-    }
+
+    Serial.print(target_data[j][0]);
     Serial.print(F("\t\t\t"));
-    Serial.println(predicted_labels[i]);
 
-    if (predicted_labels[i] == target_data[i]) {
-      correct_predictions++;
+    // Print output data for all classes
+    for (int i = 0; i < num_classes; i++) {
+      Serial.print(output_data[j][i]);
+      Serial.print(F("\t\t"));
     }
 
-    //Serial.println(((float* ) output_tensor.data)[i]); //Alternative print for the tensor
+    // Print predicted label
+    Serial.println(predicted_label);
+
+
   }
 
   float accuracy = (float)correct_predictions / total_predictions * 100;

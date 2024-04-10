@@ -1,3 +1,4 @@
+// https://github.com/Fraunhofer-IMS/AIfES_for_Arduino
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
@@ -13,7 +14,7 @@ Servo myservo;
 
 EMGFilters myFilter1;
 EMGFilters myFilter2;
-// discrete filters must works with fixed sample frequence
+// discreteF filters must works with fixed sample frequence
 // our emg filter only support "SAMPLE_FREQ_500HZ" or "SAMPLE_FREQ_1000HZ"
 // other sampleRate inputs will bypass all the EMG_FILTER
 int sampleRate = SAMPLE_FREQ_500HZ;
@@ -22,7 +23,6 @@ int sampleRate = SAMPLE_FREQ_500HZ;
 // "NOTCH_FREQ_60HZ"
 // our emg filter only support 50Hz and 60Hz input
 // other inputs will bypass all the EMG_FILTER
-const int number_data_points = 48;
 int humFreq = NOTCH_FREQ_60HZ;
 unsigned long timeBudget;
 bool make_predictions;
@@ -38,12 +38,10 @@ struct EMGData_for_predictions {
   double triRMS;
 };
 
-// Define a global array to store the first 48 values of biRMS, triRMS, and label
-
-const int length_data_collection = 12; // 8 seconds
-const int num_data_points = length_data_collection * 4;
-EMGData emg_Data[num_data_points]; // stores real-time emg data used to train model
-EMGData_for_predictions emg_predictingData[num_data_points]; // stores real-time emg data used to make predictions
+// Define a global array to store the first 32 values of biRMS, triRMS, and label
+// const int number_data_points = 32;
+EMGData emg_Data[32]; // stores real-time emg data used to train model
+EMGData_for_predictions emg_predictingData[32]; // stores real-time emg data used to make predictions
 
 // Calibration:
 // put on the sensors, and release your muscles;
@@ -196,7 +194,8 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
 
 // put your main code here, to run repeatedly:
 void loop() {
-  unsigned int biThresh, triThresh;
+  // unsigned int biThresh, triThresh;
+  // confirmSensors(biThresh, triThresh);
 
   // continue labeling and retraining unless make_predictions is true (make_predictions = true if model is above 85%)
   if (make_predictions == true) {
@@ -212,7 +211,6 @@ void loop() {
   }
 
   else {
-    // confirmSensors(biThresh, triThresh);
     Serial.println("Training will begin with flexion. A countdown will be given shortly");
     delay(3000);
     Serial.println("Start flexion in: ");
@@ -234,7 +232,7 @@ void loop() {
     // float accuracy = train_AIfES_model(emg_Data, number_data_points);
     float accuracy = train_AIfES_model(emg_Data);
     // if model accuracy is above 85%, break out of loop to take in new data that will be used to make predictions. Then continue to actuation of servo:
-    if (accuracy > 85) {
+    if (accuracy > 40) {
       Serial.println("Model accuracy is above 85%. Predictions will now be made on new data.");
       make_predictions = true;
     }

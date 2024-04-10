@@ -1,7 +1,6 @@
 // This file covers the prediction of movement
 
 float model_predictions(double bicep_rms, double tricep_rms) {
-  const int num_classes = 3;
   const int number_data_points = 1; // single pair of RMS values
 
   //AIfES requires random weights for training
@@ -17,8 +16,8 @@ float model_predictions(double bicep_rms, double tricep_rms) {
 
   // Tensor for the output with 3 classes
   // Output values of the ANN are saved here
-  uint16_t output_shape[] = {number_data_points, num_classes}; // 1*1 = 1 --> single pair of RMS values
-  float output_data[number_data_points*num_classes];                                                   // Array for storage of the output data, for each object/class one output is created                                    // Definition of the shape of the tensor, here: {1 (i.e. 1 sample), 3 (i.e. the sample contains predictions for 3 classes/objects)}
+  uint16_t output_shape[] = {number_data_points, 1}; // 1*1 = 1 --> single pair of RMS values
+  float output_data[number_data_points*1];                                                   // Array for storage of the output data, for each object/class one output is created                                    // Definition of the shape of the tensor, here: {1 (i.e. 1 sample), 3 (i.e. the sample contains predictions for 3 classes/objects)}
   aitensor_t output_tensor = AITENSOR_2D_F32(output_shape, output_data);  // Creation of the output AIfES tensor
 
 
@@ -42,19 +41,16 @@ float model_predictions(double bicep_rms, double tricep_rms) {
     // ACTUATE SERVO:
     // String movement = flexion;
     // actuateServo(movement)
-    // myservo.write(130);
-    // if (servo_extend == true) {
-    //   servo_extend = true;
-    // }
-
+    myservo.write(130);
+    delay(500);
     predicted_label = 1;
   } 
   else {
     // ACTUATE SERVO:
     // String movement = extension;
     // actuateServo(movement)
-    // myservo.write(10);
-    // servo_state = "extension";
+    myservo.write(0);
+    delay(500);
     predicted_label = 0;
   }
   Serial.print(F("\t\t\t"));

@@ -1,7 +1,11 @@
+// This function creates real labels for the training data
+// Data is labeled for 8 seconds, with flexion and extension switching every 2 seconds 
+// User is provided countdown for more accurate labeling. Countdown should be moved to OLED display.
+
 int labelData() {
   double biRMS, triRMS;
-  unsigned long labelStartTime = millis(); // Initializes the time that labels are defined 
-  String currentLabel = "flexion"; 
+  // unsigned int biThresh, triThresh;
+  // confirmSensors(biThresh, triThresh);
   unsigned long start, end, initial;
   unsigned long time = 0;
   int samples;
@@ -9,69 +13,96 @@ int labelData() {
   unsigned int triBuffer[125];
   double bisumOfSquares;
   double trisumOfSquares;
+  unsigned long labelStartTime = millis(); // initializes the start time of each flexion and extension label
+  unsigned long StartTime = millis(); // initializes the time that labels are defined, but it kept separate for model training
   unsigned long switchDuration = 2000; // 2 seconds
   unsigned long length_data_collection = 12; // 8 seconds
-  unsigned long num_data_points = length_data_collection * 4;
-  int emgIndex = 0;
+  unsigned long num_data_points = length_data_collection * 4; // 8 (seconds) * 4 (RMS values per second) = 32 data points
+  int emgIndex = 0; // Index to keep track of the number of RMS values stored
+
+  String currentLabel = "flexion"; 
+  String newLabel;
 
   while (emgIndex < num_data_points) {
     unsigned long currentTime = millis();
     unsigned long elapsedTime = currentTime - labelStartTime;
-
-    if (elapsedTime >= switchDuration) {
-      if (currentLabel == "flexion") {
-        currentLabel = "extension";
-      } 
-      else if (currentLabel == "extension") {
-        currentLabel = "rest";
-      }
-      else {
-        currentLabel = "flexion";
-      }
-
-      Serial.print("Start ");
-      Serial.print(currentLabel);
-      Serial.println(" in: ");
-      for (int i = 5; i > 0; i--) {
-        Serial.println(i);
-        delay(1000);
-      }
-
-      // Reset the label start time
-      labelStartTime = millis();
+    
+    if (currentLabel == "flexion") {
+      newLabel = "extension";
+    }
+    // // 4:
+    // if (currentLabel == "extension") {
+    //   newLabel = "flexion";
+    // } 
+    if (currentLabel == "extension") {
+      newLabel = "rest";
+    }
+    if (currentLabel == "rest") {
+      newLabel = "flexion";
     }
 
-    // Collect EMG data and calculate RMS values
+
+    if (elapsedTime >= switchDuration) {
+      Serial.print("Start ");
+      Serial.print(newLabel);
+      Serial.println(" in: ");
+      Serial.println("5");
+      delay(1000);
+      Serial.println("4");
+      delay(1000);
+      Serial.println("3");
+      delay(1000);
+      Serial.println("2");
+      delay(1000);
+      Serial.println("1");
+      delay(1000);
+      // Switch label every 2 seconds
+      if (currentLabel == "flexion") {
+        labelStartTime = millis();
+        currentLabel = "extension";
+      }
+      else if (currentLabel == "extension") {
+        labelStartTime = millis();
+        currentLabel = "rest";
+      } 
+      else {
+        labelStartTime = millis();
+        currentLabel = "flexion";
+      }
+      
+    }
+
     bisumOfSquares = 0;
     trisumOfSquares = 0;
     initial = micros();
-    for (samples = 0; samples < 125; samples++) {
+    for (samples = 0; samples<125; samples ++){
       start = micros();
       biBuffer[samples] = readBi();
       triBuffer[samples] = readTri();
       bisumOfSquares += sq(biBuffer[samples]);
       trisumOfSquares += sq(triBuffer[samples]);
       end = micros();
-      delayMicroseconds(timeBudget - (end - start));
+      delayMicroseconds(timeBudget - (end-start));
     }
     time = micros() - initial;
-
+    
     biRMS = sqrt(bisumOfSquares / samples);
     triRMS = sqrt(trisumOfSquares / samples);
 
-    // Store the EMG data and label
+    // only store the first number_data_points RMS values (12 seconds of data)
     emg_Data[emgIndex].biRMS = biRMS;
     emg_Data[emgIndex].triRMS = triRMS;
     emg_Data[emgIndex].label = currentLabel;
-    emgIndex++;
+    emgIndex++; // Increment the index
 
-    // Print the RMS values and label
     Serial.print(biRMS);
     Serial.print(",");
     Serial.print(triRMS);
     Serial.print(",");
     Serial.println(currentLabel);
+
   }
 
   return;
+
 }
