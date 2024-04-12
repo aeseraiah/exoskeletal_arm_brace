@@ -9,7 +9,7 @@ const int num_features = 2;
 uint16_t input_shape[] = {1, num_features};   
 
 ailayer_input_f32_t   input_layer     = AILAYER_INPUT_F32_A( /*input dimension=*/ num_features, /*input shape=*/ input_shape); 
-ailayer_dense_f32_t   dense_layer_1   = AILAYER_DENSE_F32_A( /*neurons=*/ 40); 
+ailayer_dense_f32_t   dense_layer_1   = AILAYER_DENSE_F32_A( /*neurons=*/ 60); 
 
 ailayer_sigmoid_f32_t sigmoid_layer_1 = AILAYER_SIGMOID_F32_A(); 
 
@@ -93,7 +93,9 @@ float train_AIfES_model(EMGData data[number_data_points]) {
   double biArray[number_data_points];
   double triArray[number_data_points];
   String labelArray[number_data_points];
-  float num_labelArray[number_data_points];
+  // float num_labelArray[number_data_points];
+  float num_labelArray[number_data_points][num_classes];
+
   const int num_rms_values_per_label = 8; // make this dynamic later
 
   for (int i = 0; i < number_data_points; ++i) {
@@ -101,30 +103,42 @@ float train_AIfES_model(EMGData data[number_data_points]) {
       biArray[i] = data[i].biRMS;
       triArray[i] = data[i].triRMS;
       labelArray[i] = data[i].label;
-      //Serial.println(labelArray[i]); // check to see if number of labels per second make sense. It should be 4/sec
   }
 
+
   for (int i = 0; i < number_data_points; ++i) {
-    if (labelArray[i] == "flexion") {
-      num_labelArray[i] = 2.0f;
-      // Serial.println(num_labelArray[i]);
-    }
-    else if (labelArray[i] == "extension") {
-      num_labelArray[i] = 1.0f;
-      // Serial.println(num_labelArray[i]);
-    } 
-    // rest label:
-    else { 
-      num_labelArray[i] = 0.0f;
-      // Serial.println(num_labelArray[i]);
-    }
+      for (int j = 0; j < num_classes; ++j) {
+          if (i % 8 == 0) { // Every 8 rows, change the value for the first column
+              if (labelArray[i] == "flexion" && j == 0) {
+                  num_labelArray[i][j] = 1.0f;
+              } else if (labelArray[i] == "extension" && j == 1) {
+                  num_labelArray[i][j] = 2.0f;
+              } else if (labelArray[i] == "rest" && j == 2) {
+                  num_labelArray[i][j] = 3.0f;
+              }  else { // rest label:
+                  num_labelArray[i][j] = 0.0f;
+                  continue;
+              }
+          } else { // For the rest of the rows, just copy the previous values
+              num_labelArray[i][j] = num_labelArray[i - 1][j];
+          }
+      }
+  }
+
+  // Print the values in tabular format
+  for (int i = 0; i < number_data_points; ++i) {
+      Serial.print("Row ");
+      Serial.print(i);
+      Serial.print(": ");
+      for (int j = 0; j < num_classes; ++j) {
+          Serial.print(num_labelArray[i][j], 2); // Print with 2 decimal places
+          Serial.print("\t"); // Tab character for spacing
+      }
+      Serial.println(); // Move to the next line for the next row
   }
 
   // -------------------------------- Create tensors needed for training ---------------------
-  // Create the input tensor for training, contains all samples
-  uint16_t input_shape[] = {number_data_points, num_features};             // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 RGB values)}
- 
-///////// TRAIN WITH REAL-TIME DATA /////////////////////////
+  uint16_t input_shape[] = {number_data_points, num_features};          
   float input_data[number_data_points*num_features];
 
   // Populate input_data array with biArray and triArray values
@@ -133,28 +147,23 @@ float train_AIfES_model(EMGData data[number_data_points]) {
       input_data[i * 2 + 1] = triArray[i];
   }
 
+  aitensor_t input_tensor = AITENSOR_2D_F32(input_shape, input_data);  
+
+  uint16_t target_shape[] = {number_data_points, num_classes};  
   float target_data[number_data_points][num_classes];
 
-  aitensor_t input_tensor = AITENSOR_2D_F32(input_shape, input_data); 
- 
-  // Create the target tensor for training, contains the desired output for the corresponding sample to train the ANN
-  uint16_t target_shape[] = {number_data_points, num_classes};            // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 possible output classes)}
-
-////////////////// TRAIN WITH REAL-TIME DATA ////////////////////////
-
   for (int i = 0; i < number_data_points; ++i) {
-    for (int j =0; j < num_rms_values_per_label; j++) {
-      target_data[i][j] = num_labelArray[j];
+    for (int j = 0; j < num_classes; j++) {
+      target_data[i][j] = num_labelArray[i][j];
+      Serial.print(target_data[i][j]);
     }
   } 
 
   aitensor_t target_tensor = AITENSOR_2D_F32(target_shape, target_data);
 
   // Define output_data as a 2D array
-  float output_data[number_data_points][num_classes];
-  // Create an output tensor for training, here the results of the ANN are saved and compared to the target tensor during training
-  // float output_data[number_data_points*1];                     // Array for storage of the output data
-  uint16_t output_shape[] = {number_data_points, num_classes};            // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 possible output classes)}
+  float output_data[number_data_points][num_classes];           
+  uint16_t output_shape[] = {number_data_points, num_classes};          
   
   aitensor_t output_tensor = AITENSOR_2D_F32(output_shape, output_data);
 
@@ -239,47 +248,54 @@ float train_AIfES_model(EMGData data[number_data_points]) {
   Serial.println(F("input 1:\tinput 2:\treal output:\tcalculated output:\tpredicted label:"));
   
   uint32_t input_counter = 0;
-  float predicted_labels[number_data_points*1];
+  float predicted_labels_index[number_data_points*1];
+  String predicted_labels[number_data_points*1];
   int correct_predictions = 0;
   int total_predictions = number_data_points;
+  float max_prob;
 
   // Loop through each data point
-  for (int j = 0; j < number_data_points; j++) {
-    int predicted_label = -1;  // Initialize predicted label to an invalid value
-    float max_probability = 0.0;  // Initialize maximum probability
-
-    // Loop through each class
-    for (int i = 0; i < num_classes; i++) {
-        // Check if the probability for the current class is higher than the previous maximum
-        if (output_data[j][i] > max_probability) {
-            max_probability = output_data[j][i];
-            predicted_label = i;  // Assign current class as the predicted label
+  for (int i = 0; i < number_data_points; i++) {
+    for (int j = 0; j < num_classes; j++) {
+        max_prob = output_data[i][0];
+        if (output_data[i][j] > max_prob) {
+          max_prob = output_data[i][j];
+          if (j == 0) { // if num_class index is 0
+            predicted_labels[i] = "flexion";
+          }
+          else if (j == 1) {
+            predicted_labels[i] = "extension";
+          }
+          else {
+            predicted_labels[i] = "rest";
+          }
         }
     }
 
-    // Compare predicted label with target label
-    if (predicted_label == target_data[i]) {
-        correct_predictions++;  // Increment counter for correct predictions
-    }
+
+    // // Compare predicted label with target label
+    // if (predicted_label == target_data[i]) {
+    //     correct_predictions++;  // Increment counter for correct predictions
+    // }
 
     // Print input data
     Serial.print(input_data[input_counter]);
-    Serial.print(F("\t\t"));
+    Serial.print(F("\t"));
     input_counter++;
     Serial.print(input_data[input_counter]);
+    Serial.print(F("\t"));
+
+    Serial.print(target_data[i][0]);
     Serial.print(F("\t\t"));
 
-    Serial.print(target_data[j][0]);
-    Serial.print(F("\t\t\t"));
-
     // Print output data for all classes
-    for (int i = 0; i < num_classes; i++) {
-      Serial.print(output_data[j][i]);
+    for (int j = 0; j < num_classes; j++) {
+      Serial.print(output_data[i][j]);
       Serial.print(F("\t\t"));
     }
 
     // Print predicted label
-    Serial.println(predicted_label);
+    Serial.println(predicted_labels[i]);
 
 
   }

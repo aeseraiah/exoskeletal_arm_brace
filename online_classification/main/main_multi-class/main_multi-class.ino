@@ -204,7 +204,7 @@ void loop() {
     // collect data and calculate RMS just before making predictions:
     while(1) {
       calculateRMS(biRMS, triRMS);
-      float array = model_predictions(biRMS, triRMS);
+      // float array = model_predictions(biRMS, triRMS);
       Serial.println("PROGRAM EXITED");
       // exit(0);
     }
