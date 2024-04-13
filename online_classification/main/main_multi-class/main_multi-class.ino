@@ -204,9 +204,7 @@ void loop() {
     // collect data and calculate RMS just before making predictions:
     while(1) {
       calculateRMS(biRMS, triRMS);
-      // float array = model_predictions(biRMS, triRMS);
-      Serial.println("PROGRAM EXITED");
-      // exit(0);
+      float array = model_predictions(biRMS, triRMS);
     }
     
   }
@@ -234,8 +232,8 @@ void loop() {
     // float accuracy = train_AIfES_model(emg_Data, number_data_points);
     float accuracy = train_AIfES_model(emg_Data);
     // if model accuracy is above 85%, break out of loop to take in new data that will be used to make predictions. Then continue to actuation of servo:
-    if (accuracy > 85) {
-      Serial.println("Model accuracy is above 85%. Predictions will now be made on new data.");
+    if (accuracy >= 0) {
+      Serial.println("Model accuracy is 85% or above. Predictions will now be made on new data.");
       make_predictions = true;
     }
 
