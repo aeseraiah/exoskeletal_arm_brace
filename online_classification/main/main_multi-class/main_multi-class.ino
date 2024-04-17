@@ -22,7 +22,8 @@ int sampleRate = SAMPLE_FREQ_500HZ;
 // "NOTCH_FREQ_60HZ"
 // our emg filter only support 50Hz and 60Hz input
 // other inputs will bypass all the EMG_FILTER
-const int number_data_points = 48;
+// const int number_data_points = 48;
+const int number_data_points = 96;
 int humFreq = NOTCH_FREQ_60HZ;
 unsigned long timeBudget;
 bool make_predictions;
@@ -40,7 +41,7 @@ struct EMGData_for_predictions {
 
 // Define a global array to store the first 48 values of biRMS, triRMS, and label
 
-const int length_data_collection = 12; // 8 seconds
+const int length_data_collection = 24; // 8 seconds
 const int num_data_points = length_data_collection * 4;
 EMGData emg_Data[num_data_points]; // stores real-time emg data used to train model
 EMGData_for_predictions emg_predictingData[num_data_points]; // stores real-time emg data used to make predictions
@@ -201,9 +202,11 @@ void loop() {
   // continue labeling and retraining unless make_predictions is true (make_predictions = true if model is above 85%)
   if (make_predictions == true) {
     double biRMS, triRMS;
+    // double biRMS_standardized, triRMS_standardized;
     // collect data and calculate RMS just before making predictions:
     while(1) {
       calculateRMS(biRMS, triRMS);
+      // if biRMS && triRMS > 10: /// threshold for resting
       float array = model_predictions(biRMS, triRMS);
     }
     
@@ -232,7 +235,7 @@ void loop() {
     // float accuracy = train_AIfES_model(emg_Data, number_data_points);
     float accuracy = train_AIfES_model(emg_Data);
     // if model accuracy is above 85%, break out of loop to take in new data that will be used to make predictions. Then continue to actuation of servo:
-    if (accuracy >= 0) {
+    if (accuracy >= 85) {
       Serial.println("Model accuracy is 85% or above. Predictions will now be made on new data.");
       make_predictions = true;
     }

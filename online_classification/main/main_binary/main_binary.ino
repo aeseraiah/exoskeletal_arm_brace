@@ -194,7 +194,7 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
 
 // put your main code here, to run repeatedly:
 void loop() {
-  // unsigned int biThresh, triThresh;
+  unsigned int biThresh, triThresh;
 
   // continue labeling and retraining unless make_predictions is true (make_predictions = true if model is above 85%)
   if (make_predictions == true) {
@@ -202,15 +202,14 @@ void loop() {
     // collect data and calculate RMS just before making predictions:
     while(1) {
       calculateRMS(biRMS, triRMS);
+      bool flexion = false;
       float array = model_predictions(biRMS, triRMS);
-      Serial.println("PROGRAM EXITED");
-      // exit(0);
     }
     
   }
 
   else {
-    confirmSensors(biThresh, triThresh);
+    //confirmSensors(biThresh, triThresh);
     Serial.println("Training will begin with flexion. A countdown will be given shortly");
     delay(3000);
     Serial.println("Start flexion in: ");

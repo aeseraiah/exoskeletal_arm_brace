@@ -1,5 +1,6 @@
 // This file covers the prediction of movement
 
+
 float model_predictions(double bicep_rms, double tricep_rms) {
   const int number_data_points = 1; // single pair of RMS values
 
@@ -37,12 +38,14 @@ float model_predictions(double bicep_rms, double tricep_rms) {
   Serial.print(input_data[1]);
   Serial.print(F("\t\t"));
   Serial.print(output_data[0]);
+
   if (output_data[0] > 0.5) {
     // ACTUATE SERVO:
     // String movement = flexion;
     // actuateServo(movement)
-    myservo.write(130);
-    delay(500);
+    flexion = true;
+    // myservo.write(130);
+    // delay(500);
     predicted_label = 1;
   } 
   else {
@@ -53,6 +56,16 @@ float model_predictions(double bicep_rms, double tricep_rms) {
     delay(500);
     predicted_label = 0;
   }
+  
+  if (flexion == true) {
+    myservo.write(130);
+    delay(500); 
+    flexion == false;
+  }
+  else {
+    continue;
+  }
+
   Serial.print(F("\t\t\t"));
   Serial.println(predicted_label);
 

@@ -15,8 +15,8 @@ int labelData() {
   double trisumOfSquares;
   unsigned long labelStartTime = millis(); // initializes the start time of each flexion and extension label
   unsigned long StartTime = millis(); // initializes the time that labels are defined, but it kept separate for model training
-  unsigned long switchDuration = 2000; // 2 seconds
-  unsigned long length_data_collection = 12; // 8 seconds
+  unsigned long switchDuration = 1000; // 1 second
+  unsigned long length_data_collection = 24; // 12 seconds
   unsigned long num_data_points = length_data_collection * 4; // 8 (seconds) * 4 (RMS values per second) = 32 data points
   int emgIndex = 0; // Index to keep track of the number of RMS values stored
 

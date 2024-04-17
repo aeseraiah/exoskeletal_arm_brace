@@ -104,7 +104,7 @@ float train_AIfES_model(EMGData data[32]) {
   }
 
   for (int i = 0; i < number_data_points; ++i) {
-    Serial.println(labelArray[i]);
+    // Serial.println(labelArray[i]);
     if (labelArray[i] == "flexion") {
       num_labelArray[i] = 1.0f;
       // Serial.println(num_labelArray[i]);

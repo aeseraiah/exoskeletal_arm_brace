@@ -43,8 +43,8 @@ float model_predictions(double bicep_rms, double tricep_rms) {
           predicted_label = "extension";
           // ACTUATE SERVO:
           // String movement = flexion;
-          // actuateServo(movement)
-          // myservo.write(5);
+            // actuateServo(movement)
+            // myservo.write(5);
           // delay(500);
         }
         else {
@@ -72,6 +72,20 @@ float model_predictions(double bicep_rms, double tricep_rms) {
 
   Serial.print(F("\t\t"));
   Serial.println(predicted_label);
+
+  if (predicted_label == "flexion") {
+    Serial.println("Writing 130");
+    // myservo.write(130);
+    // delay(500);
+
+  }
+  else if (predicted_label == "extension") {
+    if (bicep_rms && tricep_rms > 10) {
+      Serial.println("Writing 5");
+      // myservo.write(5);
+      // delay(500);    
+    }
+  }
 
   return;
 

@@ -95,7 +95,7 @@ float train_AIfES_model(EMGData data[number_data_points]) {
   String labelArray[number_data_points];
   // float num_labelArray[number_data_points];
   float num_labelArray[number_data_points][num_classes];
-  const int num_rms_values_per_label = 8; 
+  const int num_rms_values_per_label = 4; 
 
   for (int i = 0; i < number_data_points; ++i) {
       // Store the first column values (biRMS) in biArray
@@ -247,6 +247,8 @@ float train_AIfES_model(EMGData data[number_data_points]) {
   
   uint32_t input_counter = 0;
   String predicted_labels[number_data_points*1];
+  float predicted_data[number_data_points][num_classes];
+  int predicted_label_index;
   int correct_predictions = 0;
   int total_predictions = number_data_points;
   float max_prob;
@@ -255,31 +257,23 @@ float train_AIfES_model(EMGData data[number_data_points]) {
   for (int i = 0; i < number_data_points; i++) {
     max_prob = output_data[i][0];
     for (int j = 0; j < num_classes; j++) {
-        // if current probability is greater than first probability (flexion):
-        if (output_data[i][j] >= max_prob) {
-          max_prob = output_data[i][j];
-          if (j == 0) { // if num_class index is 0
-            predicted_labels[i] = "flexion";
-            // check whether predicted label has target value of 1 (indicating label presence). If so, a correct prediction has been made. If not, target value will be equal to 0.
-            if (target_data[i][j] == 1) {
-              correct_predictions++; 
-            }
-          }
-          else if (j == 1) {
-            predicted_labels[i] = "extension";
-            if (target_data[i][j] == 1) {
-              correct_predictions++; 
-            }
-          }
-          else {
-            predicted_labels[i] = "rest";
-            if (target_data[i][j] == 1) {
-              correct_predictions++; 
-            }
-          }
+      // if current probability is greater than first probability (flexion):
+      if (output_data[i][j] >= max_prob) {
+        max_prob = output_data[i][j];
+        if (j == 0) { // if num_class index is 0
+          predicted_labels[i] = "flexion";
+          predicted_label_index = 0;
         }
+        else if (j == 1) {
+          predicted_labels[i] = "extension";
+          predicted_label_index = 1;
+        }
+        else {
+          predicted_labels[i] = "rest";
+          predicted_label_index = 2;
+        }
+      }
     }
-
 
     // Print input data
     Serial.print(input_data[input_counter]);
@@ -306,6 +300,31 @@ float train_AIfES_model(EMGData data[number_data_points]) {
     Serial.println(predicted_labels[i]);
 
 
+    if (predicted_label_index == 0) {
+      predicted_data[i][0] = 1; //indicates precense of flexion class;
+      predicted_data[i][1] = 0; //indicates precense of flexion class;
+      predicted_data[i][2] = 0; //indicates precense of flexion class;
+    }
+    else if (predicted_label_index == 1) {
+      predicted_data[i][1] = 1; //indicates precense of extension class;
+      predicted_data[i][0] = 0; //indicates precense of flexion class;
+      predicted_data[i][2] = 0; //indicates precense of flexion class;
+    }
+    else {
+      predicted_data[i][2] = 1; //indicates precense of extension class;
+      predicted_data[i][0] = 0; //indicates precense of flexion class;
+      predicted_data[i][1] = 0; //indicates precense of flexion class;
+    }
+
+  }
+
+  for (int i = 0; i < number_data_points; i++) {
+    for (int j = 0; j < num_classes; j++) {
+      Serial.println(predicted_data[i][j]);
+      if (predicted_data[i][j] == target_data[i][j]) {
+        correct_predictions++;
+      }
+    }
   }
 
   float accuracy = (float)correct_predictions / total_predictions * 100;
