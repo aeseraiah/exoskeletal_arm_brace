@@ -2,7 +2,7 @@
 // Data is labeled for 8 seconds, with flexion and extension switching every 2 seconds 
 // User is provided countdown for more accurate labeling. Countdown should be moved to OLED display.
 
-int labelData() {
+int labelData(unsigned int biThresh, unsigned int triThresh) {
   double biRMS, triRMS;
   // unsigned int biThresh, triThresh;
   // confirmSensors(biThresh, triThresh);
@@ -66,23 +66,23 @@ int labelData() {
         currentLabel = "flexion";
       }
     }
-
-    bisumOfSquares = 0;
-    trisumOfSquares = 0;
-    initial = micros();
-    for (samples = 0; samples<125; samples ++){
-      start = micros();
-      biBuffer[samples] = readBi();
-      triBuffer[samples] = readTri();
-      bisumOfSquares += sq(biBuffer[samples]);
-      trisumOfSquares += sq(triBuffer[samples]);
-      end = micros();
-      delayMicroseconds(timeBudget - (end-start));
-    }
-    time = micros() - initial;
+    calculateRMS(biRMS,triRMS,biThresh,triThresh);
+    // bisumOfSquares = 0;
+    // trisumOfSquares = 0;
+    // initial = micros();
+    // for (samples = 0; samples<125; samples ++){
+    //   start = micros();
+    //   biBuffer[samples] = readBi();
+    //   triBuffer[samples] = readTri();
+    //   bisumOfSquares += sq(biBuffer[samples]);
+    //   trisumOfSquares += sq(triBuffer[samples]);
+    //   end = micros();
+    //   delayMicroseconds(timeBudget - (end-start));
+    // }
+    // time = micros() - initial;
     
-    biRMS = sqrt(bisumOfSquares / samples);
-    triRMS = sqrt(trisumOfSquares / samples);
+    // biRMS = sqrt(bisumOfSquares / samples);
+    // triRMS = sqrt(trisumOfSquares / samples);
 
     // only store the first number_data_points RMS values (8 seconds of data)
     emg_Data[emgIndex].biRMS = biRMS;

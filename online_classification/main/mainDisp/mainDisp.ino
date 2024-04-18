@@ -125,6 +125,7 @@ unsigned int readTri() {
 
 void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
   unsigned long start, end;
+  int fail = 0;
   while (1){
     
     Serial.println(F("Confirming good sensor contact."));
@@ -154,7 +155,7 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
       Serial.println(bienvlope);
       if (bienvlope > biThreshold) {
         biThreshold = bienvlope;
-        dispCalib(biThreshold, triThreshold);
+        // dispCalib(biThreshold, triThreshold);
         Serial.print(F("High Bicep Value: "));
         Serial.println(biThreshold);
       }
@@ -163,16 +164,17 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
       Serial.println(trienvlope);
       if (trienvlope > triThreshold) {
         triThreshold = trienvlope;
-        dispCalib(biThreshold, triThreshold);
+        // dispCalib(biThreshold, triThreshold);
         Serial.print(F("High Tricep Value: "));
         Serial.println(triThreshold);
       }
+      // if (trienvlope > triThreshold || bienvlope < biThreshold){ dispCalib(bienvlope, trienvlope);}
       end = micros();
       delayMicroseconds(timeBudget - (end - start));
     }
     Serial.println(F(""));
     Serial.println("10 seconds has passed. ");
-    if (biThreshold <= 1000 and triThreshold <= 1000) {
+    if (biThreshold <= 1000 && triThreshold <= 1000) {
         Serial.println(F(""));
         Serial.println(F("Sensor placement confirmed."));
         dispCalib(biThreshold, triThreshold);
@@ -186,7 +188,7 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
         Serial.println(triThreshold);
         delay(1000);
         return;
-      } else if (biThreshold <= 1000 and triThreshold >= 1000){
+      } else if (biThreshold <= 1000 && triThreshold >= 1000){
         Serial.println(F(""));
         Serial.println(F("Bicep Sensor placement confirmed. Tricep Sensor placement failed"));
         Serial.println(F("Adjust Tricep Sensor placement and try again"));
@@ -196,9 +198,11 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
         Serial.println(triThreshold);
         dispCalib(biThreshold, triThreshold);
         delay(2000);
-        dispCalibFail(1);
+        Serial.println('in tricep fail');
+        fail = 1;
+        dispCalibFail(fail);
         delay(5000);
-      } else if (biThreshold >= 1000 and triThreshold <= 1000){
+      } else if (biThreshold >= 1000 && triThreshold <= 1000){
         Serial.println(F(""));
         Serial.println(F("Bicep Sensor placement failed. Tricep Sensor placement confirmed"));
         Serial.print(F("Highest Bicep Value = "));
@@ -208,7 +212,8 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
         Serial.println(F("Adjust Bicep Sensor placement and try again in 5 seconds."));
         dispCalib(biThreshold, triThreshold);
         delay(2000);
-        dispCalibFail(0);
+        fail = 0;
+        dispCalibFail(fail);
         delay(5000);
         
       } else {
@@ -221,21 +226,44 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
         Serial.println(F("Adjust Sensor placements and try again in 5 seconds."));
         dispCalib(biThreshold, triThreshold);
         delay(2000);
-        dispCalibFail(2);
-        delay(5000);
+        fail = 2;
+        dispCalibFail(fail);
+        delay(2000);
     }
   }
 }
 
-void actuateServo(String& movement){
+void actuateServo(int pred){
   String flexion;
   String extension;
-
-  if (movement == flexion) {
+  int start = myservo.read();
+  int x = 0;
+  int pos = 0;
+  int d = 0;
+  // if prediction is flexion
+  if (pred == 0) {
+    int target = 180;
+    int mid = sq((target - start)/2);
+    if (target > start){
+      for (pos = start; pos <= target; pos ++){
+        myservo.write(pos);
+        x = sq(pos) - mid;
+        d = map(x,0,mid,5000,20000);
+        delayMicroseconds(d);
+      }
+    }
     // myservo.write(180);
   }
-
-  else {
+  //if prediciton is extension
+  else if (pred == 1) {
+    int target = 0;
+    int mid = sq((target - start)/2);
+    for (pos = start; pos >= target; pos --){
+        myservo.write(pos);
+        x = sq(pos) - mid;
+        d = map(x,0,mid,5000,20000);
+        delayMicroseconds(d);
+      }
     // myservo.write(0);
   }
   
@@ -258,7 +286,7 @@ void loop() {
     double biRMS, triRMS;
     // collect data and calculate RMS just before making predictions:
     while(1) {
-      calculateRMS(biRMS, triRMS);
+      calculateRMS(biRMS, triRMS, biThresh, triThresh);
       float array = model_predictions(biRMS, triRMS);
       Serial.println("PROGRAM EXITED");
       // exit(0);
@@ -284,7 +312,7 @@ void loop() {
     // Serial.println("1");
     // delay(1000);
 
-    labelData(); // labels and collects 8 seconds of data, then calculates RMS
+    labelData(biThresh,triThresh); // labels and collects 8 seconds of data, then calculates RMS
     Serial.println("Relax arm. Model training will now begin");
     dispTrain();
 
@@ -292,7 +320,7 @@ void loop() {
     // float accuracy = train_AIfES_model(emg_Data, number_data_points);
     float accuracy = train_AIfES_model(emg_Data);
     // if model accuracy is above 85%, break out of loop to take in new data that will be used to make predictions. Then continue to actuation of servo:
-    if (accuracy > 40) {
+    if (accuracy > 85) {
       confAccuracy();
       // Serial.println("Model accuracy is above 85%. Predictions will now be made on new data.");
       make_predictions = true;

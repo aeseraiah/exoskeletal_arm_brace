@@ -53,7 +53,7 @@ void dispCalibInstructions(void){
   // display.startscrollright(0x00, 0x0F);
   // display.println(F("Relax muscles. Values should be low."));
   display.display();
-  delay(1000);
+  // delay(1000);
   
 }
 void dispCalib(unsigned int bicep, unsigned int tricep){
@@ -61,9 +61,9 @@ void dispCalib(unsigned int bicep, unsigned int tricep){
   display.setTextSize(2);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.println(F("Bi:"));
+  display.println("Bi:");
   display.println(bicep);
-  display.println(F("Tri:"));
+  display.println("Tri:");
   display.println(tricep);
   display.display();
   // delay(250);
@@ -74,14 +74,20 @@ void dispCalibFail(int sensor){
   display.setTextSize(2);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  if (sensor = 0){
-    display.println("Bicep Sensor Failed");
+  if (sensor == 0){
+    display.println("Bicep");
+    display.println("Sensor");
+    display.println("Failed");
   }
-  else if (sensor = 1){
-    display.println("Tricep Sensor Failed");
+  else if (sensor == 1){
+    display.println("Tricep");
+    display.println("Sensor");
+    display.println("Failed");
   }
-  else{
-    display.println("Both Sensors Failed");
+  else if (sensor == 2){
+    display.println("Both");
+    display.println("Sensor");
+    display.println("Failed");
   }
   display.display();
   // delay(250);
@@ -132,7 +138,17 @@ void dispTrain(void){
   display.println(F("Relax Arm"));
   display.println(F("Model Training in Progress"));
   display.display();
-  delay(2000);
+  // delay(2000);
+}
+void dispEpoch(int i){
+  display.clearDisplay();
+  display.setTextSize(2);             // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE);        // Draw white text
+  display.setCursor(0,0);             // Start at top-left corner
+  display.println(F("Epochs Left:"));
+  display.println(i);
+  
+  display.display();
 }
 
 void confAccuracy(void){
@@ -143,7 +159,7 @@ void confAccuracy(void){
   display.println(F("Model accuracy is above 85%. "));
   display.println(F("Predictions will now be made on new data."));
   display.display();
-  delay(2000);
+  // delay(2000);
 }
 
 void failAccuracy(){
@@ -154,5 +170,5 @@ void failAccuracy(){
   display.println(F("Model is below 85% accuracy. "));
   display.println(F("It should be retrained with new data."));
   display.display();
-  delay(2000);
+  // delay(2000);
 }

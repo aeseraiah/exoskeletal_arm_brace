@@ -264,7 +264,7 @@ float train_AIfES_model(EMGData data[32]) {
   // ------------------------------------- Run the training ------------------------------------
   float loss;                                            // Variable to store the loss of the model
   uint32_t batch_size = 1;                  // Setting the batch size, here: full batch
-  uint16_t epochs = 200;                                 // Set the number of epochs for training
+  uint16_t epochs = 100;                                 // Set the number of epochs for training
   uint16_t print_interval = 10;                          // Print every ten epochs the current loss
 
   Serial.println(F("Start training"));
@@ -277,6 +277,7 @@ float train_AIfES_model(EMGData data[32]) {
       // Calculate loss
       aialgo_calc_loss_model_f32(&model, &input_tensor, &target_tensor, &loss);
       // Output current epoch and loss
+      dispEpoch(i);
       Serial.print(F("Epoch: "));
       Serial.print(i);
       Serial.print(F(" Loss: "));
@@ -319,11 +320,15 @@ float train_AIfES_model(EMGData data[32]) {
     Serial.print(F("\t\t"));
     Serial.print(output_data[i]);
     if (output_data[i] > 0.5) {
+      //0 is flexion
+      actuateServo(0);
       // ACTUATE SERVO:
       // myservo.write(180);
       predicted_labels[i] = 1;
     } 
     else {
+      //1 is extension
+      actuateServo(1);
       // myservo.write(0);
       predicted_labels[i] = 0;
     }
