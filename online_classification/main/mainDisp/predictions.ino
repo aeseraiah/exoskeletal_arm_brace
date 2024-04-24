@@ -29,7 +29,7 @@ float model_predictions(double bicep_rms, double tricep_rms) {
   
   uint32_t input_counter = 0;
   float predicted_label;
-  int last = 0;
+  
 
   // ----------------------------------------- Output of results --------------------------
   
@@ -44,8 +44,14 @@ float model_predictions(double bicep_rms, double tricep_rms) {
     // actuateServo(movement)
     Serial.println("servo flexing");
     //only actuate if not already in state
-    if (last == 0){actuateServo(180,10);}
-    last = 1;
+    
+    // if (last == 0){
+    //   actuateServo(180,10);
+    //   last = 1;
+    // }
+    actuateServo(180,10);
+    Serial.println("last: ");
+    Serial.print(last);
     dispServo(1);
     delay(1000);
     
@@ -59,8 +65,13 @@ float model_predictions(double bicep_rms, double tricep_rms) {
     // actuateServo(movement)
     Serial.println("servo extend");
     //only actuate if it is not already in state
-    if (last == 1){actuateServo(10,180);}
-    last = 0;
+    
+    // if (last == 1){actuateServo(10,180);
+    //   last = 0;
+    // }
+    actuateServo(10,180);
+    Serial.println("last: ");
+    Serial.print(last);
     dispServo(0);
     delay(1000);
     

@@ -30,7 +30,7 @@ int sampleRate = SAMPLE_FREQ_500HZ;
 int humFreq = NOTCH_FREQ_60HZ;
 unsigned long timeBudget;
 bool make_predictions;
-
+int last;
 struct EMGData {
   double biRMS;
   double triRMS;
@@ -237,30 +237,34 @@ void actuateServo(int initial, int target){
 
   int x,d;
   int mid = abs((target-initial)/2);
-  if (target > initial){
+  if (target > initial && last == 1){
+    Serial.println("Extending");
     for(int pos = initial+2; pos<=target; pos+=2){
       myservo.write(pos);
       x = abs(pos-mid);
       // map the delay based on how far the current location is from the midpoint: highest speed/lowest delay should be at the midpoint
       d = map(x,0,mid,10,50);
-      Serial.print(F("current location: "));
-      Serial.println(pos);
-      Serial.print(F("delay: "));
-      Serial.println(d);
+      // Serial.print(F("current location: "));
+      // Serial.println(pos);
+      // Serial.print(F("delay: "));
+      // Serial.println(d);
       delay(d);
     }
+    last = 0;
   }
-  else{
+  else if (last == 0) {
+    Serial.println("Flexing");
     for(int pos = initial-2; pos>=target; pos-=2){
       myservo.write(pos);
       x = abs(pos-mid);
       d = map(x,0,mid,10,30);
-      Serial.print(F("current location: "));
-      Serial.println(pos);
-      Serial.print(F("delay: "));
-      Serial.println(d);
+      // Serial.print(F("current location: "));
+      // Serial.println(pos);
+      // Serial.print(F("delay: "));
+      // Serial.println(d);
       delay(d);
     }
+    last = 1;
   }
 }
 //1. get thresholds for both tricep and bicep
@@ -278,10 +282,13 @@ void loop() {
 
   // continue labeling and retraining unless make_predictions is true (make_predictions = true if model is above 85%)
   if (make_predictions == true) {
+    last = 0;
     double biRMS, triRMS;
     // collect data and calculate RMS just before making predictions:
+    
     while(1) {
       calculateRMS(biRMS, triRMS, 0, 0);
+
       float array = model_predictions(biRMS, triRMS);
       // Serial.println("PROGRAM EXITED");
       // exit(0);
