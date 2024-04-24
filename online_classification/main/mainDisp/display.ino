@@ -1,39 +1,5 @@
 
-
-// #define SCREEN_WIDTH 128 // OLED display width, in pixels
-// #define SCREEN_HEIGHT 64 // OLED display height, in pixels
-
-// // Declaration for SSD1306 display connected using software SPI (default case):
-// #define OLED_MOSI  9
-// #define OLED_CLK   8
-// #define OLED_DC    11
-// #define OLED_CS    12
-// #define OLED_RESET 10
-// Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,
-//   OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
-
-// #define LOGO_HEIGHT   16
-// #define LOGO_WIDTH    16
-// static const unsigned char PROGMEM logo_bmp[] =
-// { 0b00000000, 0b11000000,
-//   0b00000001, 0b11000000,
-//   0b00000001, 0b11000000,
-//   0b00000011, 0b11100000,
-//   0b11110011, 0b11100000,
-//   0b11111110, 0b11111000,
-//   0b01111110, 0b11111111,
-//   0b00110011, 0b10011111,
-//   0b00011111, 0b11111100,
-//   0b00001101, 0b01110000,
-//   0b00011011, 0b10100000,
-//   0b00111111, 0b11100000,
-//   0b00111111, 0b11110000,
-//   0b01111100, 0b11110000,
-//   0b01110000, 0b01110000,
-//   0b00000000, 0b00110000 };
-
-
-void dispCalibInstructions(void){
+void dispCalibInstructions(){
   display.clearDisplay();
   display.setTextSize(2);             
   display.setTextColor(SSD1306_WHITE);        // Draw white text
@@ -53,7 +19,7 @@ void dispCalibInstructions(void){
   // display.startscrollright(0x00, 0x0F);
   // display.println(F("Relax muscles. Values should be low."));
   display.display();
-  // delay(1000);
+  
   
 }
 void dispCalib(unsigned int bicep, unsigned int tricep){
@@ -128,6 +94,12 @@ void countDown(void){
     display.display();
     delay(1000);
   }
+  display.clearDisplay();
+  display.setTextSize(3);             // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE);        // Draw white text
+  display.setCursor(0,0);             // Start at top-left corner
+  display.println("Begin");
+  display.display();
 }
 
 void dispTrain(void){
@@ -140,35 +112,79 @@ void dispTrain(void){
   display.display();
   // delay(2000);
 }
-void dispEpoch(int i){
+// void dispEpoch(int i){
+//   display.clearDisplay();
+//   display.setTextSize(2);             // Normal 1:1 pixel scale
+//   display.setTextColor(SSD1306_WHITE);        // Draw white text
+//   display.setCursor(0,0);             // Start at top-left corner
+//   display.println(F("Iterations"));
+//   display.println(F("left: "));
+//   display.println(i);
+//   display.display();
+// }
+
+void dispAcc(float acc){
   display.clearDisplay();
   display.setTextSize(2);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.println(F("Epochs Left:"));
-  display.println(i);
-  
+  display.println(F("Accuracy:"));
+  display.println(acc);
   display.display();
 }
-
 void confAccuracy(void){
   display.clearDisplay();
-  display.setTextSize(1);             // Normal 1:1 pixel scale
+  display.setTextSize(2);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.println(F("Model accuracy is above 85%. "));
-  display.println(F("Predictions will now be made on new data."));
+  // display.println(F("Model accuracy is above 85%. "));
+  // display.println(F("Predictions will now be made on new data."));
+  display.println(F("Model"));
+  display.println(F("Accuracy"));
+  display.println(F("Confirmed"));
   display.display();
   // delay(2000);
 }
 
 void failAccuracy(){
   display.clearDisplay();
-  display.setTextSize(1);             // Normal 1:1 pixel scale
+  display.setTextSize(2);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.println(F("Model is below 85% accuracy. "));
-  display.println(F("It should be retrained with new data."));
+  // display.println(F("Model is below 85% accuracy. "));
+  // display.println(F("It should be retrained with new data."));
+  display.println(F("Model"));
+  display.println(F("Accuracy"));
+  display.println(F("Failed"));
   display.display();
   // delay(2000);
+}
+
+void dispServo(int servo){
+  if (servo == 1){
+    display.clearDisplay();
+    display.setTextSize(2);             // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE);        // Draw white text
+    display.setCursor(0,0);             // Start at top-left corner
+    display.println(F("servo flexed"));
+    display.display();
+  }
+  else{
+    display.clearDisplay();
+    display.setTextSize(2);             // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE);        // Draw white text
+    display.setCursor(0,0);             // Start at top-left corner
+    display.println(F("servo extended"));
+    display.display();
+  }
+}
+
+void modelDisp(void){
+  display.clearDisplay();
+    display.setTextSize(2);             // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE);        // Draw white text
+    display.setCursor(0,0);             // Start at top-left corner
+    display.println(F("Training"));
+    display.println(F("Model"));
+    display.display();
 }

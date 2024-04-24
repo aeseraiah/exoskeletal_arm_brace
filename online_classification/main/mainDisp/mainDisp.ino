@@ -105,6 +105,7 @@ void setup() {
 
 }
 
+
 unsigned int readBi() {
     unsigned int biValue, biDataAfterFilter, bienvlope;
     biValue = analogRead(BiSensorInputPin);
@@ -232,41 +233,35 @@ void confirmSensors(unsigned int& biThresh, unsigned int& triThresh){
     }
   }
 }
+void actuateServo(int initial, int target){
 
-void actuateServo(int pred){
-  String flexion;
-  String extension;
-  int start = myservo.read();
-  int x = 0;
-  int pos = 0;
-  int d = 0;
-  // if prediction is flexion
-  if (pred == 0) {
-    int target = 180;
-    int mid = sq((target - start)/2);
-    if (target > start){
-      for (pos = start; pos <= target; pos ++){
-        myservo.write(pos);
-        x = sq(pos) - mid;
-        d = map(x,0,mid,5000,20000);
-        delayMicroseconds(d);
-      }
+  int x,d;
+  int mid = abs((target-initial)/2);
+  if (target > initial){
+    for(int pos = initial+2; pos<=target; pos+=2){
+      myservo.write(pos);
+      x = abs(pos-mid);
+      // map the delay based on how far the current location is from the midpoint: highest speed/lowest delay should be at the midpoint
+      d = map(x,0,mid,10,50);
+      Serial.print(F("current location: "));
+      Serial.println(pos);
+      Serial.print(F("delay: "));
+      Serial.println(d);
+      delay(d);
     }
-    // myservo.write(180);
   }
-  //if prediciton is extension
-  else if (pred == 1) {
-    int target = 0;
-    int mid = sq((target - start)/2);
-    for (pos = start; pos >= target; pos --){
-        myservo.write(pos);
-        x = sq(pos) - mid;
-        d = map(x,0,mid,5000,20000);
-        delayMicroseconds(d);
-      }
-    // myservo.write(0);
+  else{
+    for(int pos = initial-2; pos>=target; pos-=2){
+      myservo.write(pos);
+      x = abs(pos-mid);
+      d = map(x,0,mid,10,30);
+      Serial.print(F("current location: "));
+      Serial.println(pos);
+      Serial.print(F("delay: "));
+      Serial.println(d);
+      delay(d);
+    }
   }
-  
 }
 //1. get thresholds for both tricep and bicep
 //LOOP:
@@ -286,9 +281,9 @@ void loop() {
     double biRMS, triRMS;
     // collect data and calculate RMS just before making predictions:
     while(1) {
-      calculateRMS(biRMS, triRMS, biThresh, triThresh);
+      calculateRMS(biRMS, triRMS, 0, 0);
       float array = model_predictions(biRMS, triRMS);
-      Serial.println("PROGRAM EXITED");
+      // Serial.println("PROGRAM EXITED");
       // exit(0);
     }
     
@@ -312,21 +307,27 @@ void loop() {
     // Serial.println("1");
     // delay(1000);
 
-    labelData(biThresh,triThresh); // labels and collects 8 seconds of data, then calculates RMS
+    labelData(0,0); // labels and collects 8 seconds of data, then calculates RMS
     Serial.println("Relax arm. Model training will now begin");
-    dispTrain();
-
+    // dispTrain();
+    
     build_AIfES_model();
+    modelDisp();
+    delay(500);
     // float accuracy = train_AIfES_model(emg_Data, number_data_points);
     float accuracy = train_AIfES_model(emg_Data);
+    dispAcc(accuracy);
+    delay(500);
     // if model accuracy is above 85%, break out of loop to take in new data that will be used to make predictions. Then continue to actuation of servo:
     if (accuracy > 85) {
+
       confAccuracy();
       // Serial.println("Model accuracy is above 85%. Predictions will now be made on new data.");
       make_predictions = true;
     }
 
     else {
+      Serial.println("past display train");
       // modify this else statement to go back to section of code that collects data and retrain model with new data 
       failAccuracy();
       // Serial.println("Model is below 85% accuracy. It should be retrained with new data");
@@ -335,3 +336,5 @@ void loop() {
 
   }
 }
+
+
