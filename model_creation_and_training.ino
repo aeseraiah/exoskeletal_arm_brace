@@ -117,7 +117,7 @@ float train_AIfES_model(EMGData data[32]) {
 
   // -------------------------------- Create tensors needed for training ---------------------
   // Create the input tensor for training, contains all samples
-  uint16_t input_shape[] = {number_data_points, 2};             // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 RGB values)}
+  uint16_t input_shape[] = {number_data_points, 2};
  
 ///////// TRAIN WITH REAL-TIME DATA /////////////////////////
   float input_data[number_data_points*2];
@@ -128,46 +128,10 @@ float train_AIfES_model(EMGData data[32]) {
       input_data[i * 2 + 1] = triArray[i];
   }
 
-///////// TRAIN WITH OFFLINE DATA /////////////////////////
-  // float input_data[number_data_points*2] = {
-  //   33.05f,32.89f,
-  //   87.00f,77.51f,
-  //   94.27f,81.90f,
-  //   96.67f,78.30f,
-  //   78.28f,61.53f,
-  //   95.32f,76.87f,
-  //   78.22f,53.66f,
-  //   92.20f,75.80f,
-  //   15.47f,21.14f,
-  //   53.86f,57.77f,
-  //   70.11f,75.33f,
-  //   66.01f,75.66f,
-  //   33.61f,48.81f,
-  //   82.46f,85.92f,
-  //   49.10f,62.33f,
-  //   42.28f,48.70f,
-  //   33.05f,32.89f,
-  //   87.00f,77.51f,
-  //   94.27f,81.90f,
-  //   96.67f,78.30f,
-  //   78.28f,61.53f,
-  //   95.32f,76.87f,
-  //   78.22f,53.66f,
-  //   92.20f,75.80f,
-  //   15.47f,21.14f,
-  //   53.86f,57.77f,
-  //   70.11f,75.33f,
-  //   66.01f,75.66f,
-  //   33.61f,48.81f,
-  //   82.46f,85.92f,
-  //   49.10f,62.33f,
-  //   42.28f,48.70f
-  // };
-
   aitensor_t input_tensor = AITENSOR_2D_F32(input_shape, input_data); 
  
   // Create the target tensor for training, contains the desired output for the corresponding sample to train the ANN
-  uint16_t target_shape[] = {number_data_points, 1};            // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 possible output classes)}
+  uint16_t target_shape[] = {number_data_points, 1};
 
 ////////////////// TRAIN WITH REAL-TIME DATA ////////////////////////
   float target_data[number_data_points*1];
@@ -176,48 +140,11 @@ float train_AIfES_model(EMGData data[32]) {
       target_data[i] = num_labelArray[i];
   }
 
-
-////////////////// TRAIN WITH OFFLINE DATA ////////////////////////
-  // float target_data[number_data_points*1] = {
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   0.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f,
-  //   1.0f
-  // };  
-
   aitensor_t target_tensor = AITENSOR_2D_F32(target_shape, target_data);
 
   // Create an output tensor for training, here the results of the ANN are saved and compared to the target tensor during training
   float output_data[number_data_points*1];                     // Array for storage of the output data
-  uint16_t output_shape[] = {number_data_points, 1};            // Definition of the shape of the tensor, here: {# of total samples (i.e. samples per object * 3 objects), 3 (i.e. for each sample we have 3 possible output classes)}
+  uint16_t output_shape[] = {number_data_points, 1};
   
   aitensor_t output_tensor = AITENSOR_2D_F32(output_shape, output_data);
 

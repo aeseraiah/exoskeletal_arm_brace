@@ -1,5 +1,3 @@
-// This function 
-
 void calculateRMS(double& biRMS, double& triRMS, unsigned int biThreshold, unsigned int triThreshold) {
   int samples;
   unsigned long start, end, initial;
@@ -14,12 +12,12 @@ void calculateRMS(double& biRMS, double& triRMS, unsigned int biThreshold, unsig
   initial = micros();
   for (samples = 0; samples<125; samples ++){
     start = micros();
-    biBuffer[samples] = readBi();
+    biBuffer[samples] = readBi(); // squares values
     biBuffer[samples] = (biBuffer[samples] > biThreshold) ? biBuffer[samples] : 0;
-    triBuffer[samples] = readTri();
+    triBuffer[samples] = readTri(); // squares values
     triBuffer[samples] = (triBuffer[samples] > triThreshold) ? triBuffer[samples] : 0;
-    bisumOfSquares += sq(biBuffer[samples]);
-    trisumOfSquares += sq(triBuffer[samples]);
+    bisumOfSquares += biBuffer[samples];
+    trisumOfSquares += triBuffer[samples];
     end = micros();
     delayMicroseconds(timeBudget - (end-start));
   }

@@ -1,4 +1,3 @@
-// https://github.com/Fraunhofer-IMS/AIfES_for_Arduino
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
@@ -18,15 +17,7 @@ Servo myservo;
 
 EMGFilters myFilter1;
 EMGFilters myFilter2;
-// discrete filters must works with fixed sample frequence
-// our emg filter only support "SAMPLE_FREQ_500HZ" or "SAMPLE_FREQ_1000HZ"
-// other sampleRate inputs will bypass all the EMG_FILTER
 int sampleRate = SAMPLE_FREQ_500HZ;
-// For countries where power transmission is at 50 Hz
-// For countries where power transmission is at 60 Hz, need to change to
-// "NOTCH_FREQ_60HZ"
-// our emg filter only support 50Hz and 60Hz input
-// other inputs will bypass all the EMG_FILTER
 int humFreq = NOTCH_FREQ_60HZ;
 unsigned long timeBudget;
 bool make_predictions;
@@ -53,6 +44,7 @@ struct EMGData_for_predictions {
 #define OLED_RESET 10
 #define LOGO_HEIGHT   16
 #define LOGO_WIDTH    16
+
 static const unsigned char PROGMEM logo_bmp[] =
 { 0b00000000, 0b11000000,
   0b00000001, 0b11000000,
@@ -85,7 +77,6 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,
   OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 
 void setup() {
-  // put your setup code here, to run once:
   myFilter1.init(sampleRate, humFreq, true, true, true);
   myFilter2.init(sampleRate, humFreq, true, true, true);
   timeBudget = 1e6/sampleRate;
@@ -243,7 +234,7 @@ void actuateServo(int initial, int target){
       myservo.write(pos);
       x = abs(pos-mid);
       // map the delay based on how far the current location is from the midpoint: highest speed/lowest delay should be at the midpoint
-      d = map(x,0,mid,10,50);
+      d = map(x,0,mid,5,20);
       // Serial.print(F("current location: "));
       // Serial.println(pos);
       // Serial.print(F("delay: "));
@@ -252,12 +243,12 @@ void actuateServo(int initial, int target){
     }
     last = 0;
   }
-  else if (last == 0) {
+  else if (target < initial && last == 0) {
     Serial.println("Flexing");
     for(int pos = initial-2; pos>=target; pos-=2){
       myservo.write(pos);
       x = abs(pos-mid);
-      d = map(x,0,mid,10,30);
+      d = map(x,0,mid,5,20);
       // Serial.print(F("current location: "));
       // Serial.println(pos);
       // Serial.print(F("delay: "));
@@ -277,6 +268,7 @@ void actuateServo(int initial, int target){
 
 // put your main code here, to run repeatedly:
 void loop() {
+  myservo.write(150);
   unsigned int biThresh, triThresh;
   
 

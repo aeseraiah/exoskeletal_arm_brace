@@ -1,5 +1,3 @@
-// This file covers the prediction of movement
-
 float model_predictions(double bicep_rms, double tricep_rms) {
   const int number_data_points = 1; // single pair of RMS values
 
@@ -14,10 +12,9 @@ float model_predictions(double bicep_rms, double tricep_rms) {
   uint16_t input_shape[] = {1, 2}; // single RMS data point (bi and tri) --> single row, two columns                                 
   aitensor_t input_tensor = AITENSOR_2D_F32(input_shape, input_data);   // Creation of the input AIfES tensor
 
-  // Tensor for the output with 3 classes
   // Output values of the ANN are saved here
   uint16_t output_shape[] = {number_data_points, 1}; // 1*1 = 1 --> single pair of RMS values
-  float output_data[number_data_points*1];                                                   // Array for storage of the output data, for each object/class one output is created                                    // Definition of the shape of the tensor, here: {1 (i.e. 1 sample), 3 (i.e. the sample contains predictions for 3 classes/objects)}
+  float output_data[number_data_points*1];                                                 
   aitensor_t output_tensor = AITENSOR_2D_F32(output_shape, output_data);  // Creation of the output AIfES tensor
 
 

@@ -67,22 +67,6 @@ int labelData(unsigned int biThresh, unsigned int triThresh) {
       }
     }
     calculateRMS(biRMS,triRMS,biThresh,triThresh);
-    // bisumOfSquares = 0;
-    // trisumOfSquares = 0;
-    // initial = micros();
-    // for (samples = 0; samples<125; samples ++){
-    //   start = micros();
-    //   biBuffer[samples] = readBi();
-    //   triBuffer[samples] = readTri();
-    //   bisumOfSquares += sq(biBuffer[samples]);
-    //   trisumOfSquares += sq(triBuffer[samples]);
-    //   end = micros();
-    //   delayMicroseconds(timeBudget - (end-start));
-    // }
-    // time = micros() - initial;
-    
-    // biRMS = sqrt(bisumOfSquares / samples);
-    // triRMS = sqrt(trisumOfSquares / samples);
 
     // only store the first number_data_points RMS values (8 seconds of data)
     emg_Data[emgIndex].biRMS = biRMS;
